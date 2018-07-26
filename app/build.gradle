@@ -70,6 +70,7 @@ dependencies {
     compile project(':libraries_res:chrome_res')
     compile project(':libraries_res:ui_res')
     compile project(':libraries_res:content_res')
+    compile 'com.github.nisrulz:screenshott:2.0.0'
 
     compile 'com.android.support:multidex:1.0.2'
 }

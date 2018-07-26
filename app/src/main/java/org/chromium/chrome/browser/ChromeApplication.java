@@ -76,7 +76,9 @@ import android.util.Log;
 public class ChromeApplication extends ContentApplication {
     public static final String COMMAND_LINE_FILE = "chrome-command-line";
 
-    private static final String TAG = "ChromiumApplication";
+    public static final String TAG = "ChromiumApplication";
+    public static final String TAG_RHG_SCROLL = "Rheingold-Browser_Scroll";
+
     private static final String PREF_BOOT_TIMESTAMP =
             "com.google.android.apps.chrome.ChromeMobileApplication.BOOT_TIMESTAMP";
     private static final long BOOT_TIMESTAMP_MARGIN_MS = 1000;
