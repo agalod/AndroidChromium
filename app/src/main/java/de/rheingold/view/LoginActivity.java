@@ -7,6 +7,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import org.chromium.chrome.browser.R;
+
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener{
 
     SharedPreferences sharedPref;
@@ -19,9 +21,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        login = findViewById(R.id.btnLogin);
-        etEmail = findViewById(R.id.etEmail);
-        etPass = findViewById(R.id.etPass);
+        login = (Button) findViewById(R.id.btnLogin);
+        etEmail = (EditText) findViewById(R.id.etEmail);
+        etPass = (EditText) findViewById(R.id.etPass);
         login.setOnClickListener(this);
         sharedPref = this.getSharedPreferences("SharedPreference_userInfo", MODE_PRIVATE);
         etEmail.setText(sharedPref.getString("Email Adress", ""));
@@ -35,6 +37,5 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         editor.putString("Email Adress", etEmail.getText().toString());
         editor.putString("Paswwort", etPass.getText().toString());
         editor.apply();
-
     }
 }
