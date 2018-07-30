@@ -1,5 +1,6 @@
 package de.rheingold.view;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import org.chromium.chrome.browser.R;
+import org.chromium.chrome.browser.document.ChromeLauncherActivity;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -37,5 +39,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         editor.putString("Email Adress", etEmail.getText().toString());
         editor.putString("Paswwort", etPass.getText().toString());
         editor.apply();
+
+        Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
+        LoginActivity.this.startActivity(browserIntent);
     }
 }
