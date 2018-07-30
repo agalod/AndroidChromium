@@ -154,7 +154,7 @@ by a child template that "extends" this file.
 
         <activity
             android:name="de.rheingold.view.LoginActivity"
-            android:theme="@style/Theme.AppCompat">
+            android:theme="@style/Theme.AppCompat.NoActionBar">
 
         </activity>
 
