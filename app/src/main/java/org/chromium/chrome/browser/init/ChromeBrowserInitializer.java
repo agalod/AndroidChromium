@@ -189,7 +189,7 @@ public class ChromeBrowserInitializer {
         // Don't do any large file access here!
         ContentApplication.initCommandLine(mApplication);
         waitForDebuggerIfNeeded();
-        ChromeStrictMode.configureStrictMode();
+//        ChromeStrictMode.configureStrictMode();
         ChromeWebApkHost.init();
 
         warmUpSharedPrefs();

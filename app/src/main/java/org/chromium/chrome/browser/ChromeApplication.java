@@ -68,6 +68,8 @@ import android.os.SystemClock;
 import android.support.multidex.MultiDex;
 import android.util.Log;
 
+import java.util.UUID;
+
 /**
  * Basic application functionality that should be shared among all browser applications that use
  * chrome layer.
@@ -77,13 +79,22 @@ public class ChromeApplication extends ContentApplication {
     public static final String COMMAND_LINE_FILE = "chrome-command-line";
 
     public static final String TAG = "ChromiumApplication";
-    public static final String TAG_RHG_SCROLL = "Rheingold-Browser_Scroll";
+    public static final String TAG_RHG_TAB = "RHG-Tab";
+    public static final String TAG_RHG_GESTURE = "RHG-Gesture";
+    public static final String TAG_RHG_LOGIN = "RHG-Login";
+    public static final String TAG_RHG_UPLOADSERVICE = "RHG-UploadService";
+    public static final String TAG_RHG_TABOBSERVER = "RHG-TabObserver";
 
     private static final String PREF_BOOT_TIMESTAMP =
             "com.google.android.apps.chrome.ChromeMobileApplication.BOOT_TIMESTAMP";
     private static final long BOOT_TIMESTAMP_MARGIN_MS = 1000;
 
+    public static String browserId = null;
+    public static String sessionId = null;
+
     private static DocumentTabModelSelector sDocumentTabModelSelector;
+
+    public static String authorization;
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -111,6 +122,10 @@ public class ChromeApplication extends ContentApplication {
         initCommandLine();
         TraceEvent.maybeEnableEarlyTracing();
         TraceEvent.begin("ChromeApplication.onCreate");
+        sessionId = UUID.randomUUID().toString();
+
+        SharedPreferences sharedPref = this.getSharedPreferences(getResources().getString(R.string.app_name), MODE_PRIVATE);
+        browserId = sharedPref.getString("BrowserId", UUID.randomUUID().toString());
 
         super.onCreate();
 

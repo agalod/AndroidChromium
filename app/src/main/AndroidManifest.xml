@@ -92,6 +92,9 @@ by a child template that "extends" this file.
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <uses-permission android:name="com.google.android.apps.now.CURRENT_ACCOUNT_ACCESS" />
 
 
@@ -155,8 +158,10 @@ by a child template that "extends" this file.
         <activity
             android:name="de.rheingold.view.LoginActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar">
-
         </activity>
+
+        <service android:name="de.rheingold.service.UploadService">
+        </service>
 
         <activity-alias
             android:name="com.google.android.apps.chrome.Main"
@@ -1398,6 +1403,8 @@ by a child template that "extends" this file.
                 <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
             </intent-filter>
         </receiver>
+
+
 
         <service
             android:name="org.chromium.chrome.browser.media.MediaCaptureNotificationService"

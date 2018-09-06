@@ -26,7 +26,6 @@ import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
-import android.widget.Toast;
 
 import org.chromium.base.ApiCompatibilityUtils;
 import org.chromium.base.ApplicationStatus;
@@ -95,7 +94,6 @@ import org.chromium.content.browser.ContentView;
 import org.chromium.content.browser.ContentViewClient;
 import org.chromium.content.browser.ContentViewCore;
 import org.chromium.content.browser.crypto.CipherFactory;
-import org.chromium.content_public.browser.ContentBitmapCallback;
 import org.chromium.content_public.browser.GestureStateListener;
 import org.chromium.content_public.browser.LoadUrlParams;
 import org.chromium.content_public.browser.WebContents;
@@ -112,12 +110,12 @@ import org.chromium.ui.base.ViewAndroidDelegate;
 import org.chromium.ui.base.WindowAndroid;
 import org.chromium.ui.mojom.WindowOpenDisposition;
 
-import java.io.File;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import github.nisrulz.screenshott.ScreenShott;
+import de.rheingold.observers.RHGGestureObserver;
+import de.rheingold.observers.RHGTabObserver;
 
 /**
  * The basic Java representation of a tab.  Contains and manages a {@link ContentView}.
@@ -180,7 +178,7 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
      * An Application {@link Context}.  Unlike {@link #mActivity}, this is the only one that is
      * publicly exposed to help prevent leaking the {@link Activity}.
      */
-    private final Context mThemedApplicationContext;
+    public final Context mThemedApplicationContext;
 
     /**
      * Gives {@link Tab} a way to interact with the Android window.
@@ -410,6 +408,13 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
 
     private ChromeDownloadDelegate mDownloadDelegate;
 
+    /*
+    * RHG Tab Observer    *
+    * */
+    private RHGTabObserver mRHGTabObserver;
+
+    private RHGGestureObserver mRHGGestureStateListener;
+
     /**
      * Whether or not the tab closing the tab can send the user back to the app that opened it.
      */
@@ -511,51 +516,74 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
     {
         return new GestureStateListener()
         {
+//            public boolean takeScreenshot()
+//            {
+//                if(getWebContents() == null)
+//                    return false;
+//                final String url = getWebContents().getUrl();
+//                final String tabId = String.valueOf(getId());
+//                getWebContents().getContentBitmapAsync(
+//                        Bitmap.Config.ARGB_8888, 1.f, new Rect(), new ContentBitmapCallback()
+//                        {
+//                            @Override
+//                            public void onFinishGetBitmap(Bitmap bitmap, int i)
+//                            {
+//                                if (bitmap != null)
+//                                    try
+//                                    {
+//
+//                                        File file = ScreenShott.getInstance()
+//                                                .saveScreenshotToPicturesFolder(getApplicationContext(), bitmap, "my_screenshot");
+//
+//                                        Intent intent = new Intent(getActivity(), UploadService.class);
+//                                        intent.putExtra("reason", mThemedApplicationContext.getString(org.chromium.chrome.browser.R.string.rhg_browseaction_scroll));
+//                                        intent.putExtra("tabId", tabId);
+//                                        intent.putExtra("url", url);
+//                                        intent.putExtra("bitmapFile", file);
+//                                        getActivity().startService(intent);
+//
+//                                        // Display a toast
+//                                        Toast.makeText(getApplicationContext(), "Bitmap Saved at " + file.getAbsolutePath(),
+//                                                Toast.LENGTH_SHORT).show();
+//                                    } catch (Exception e)
+//                                    {
+//                                        e.printStackTrace();
+//                                    }
+//                            }
+//                        });
+//                return true;
+//            }
+
             @Override
             public void onFlingStartGesture(int scrollOffsetY, int scrollExtentY)
             {
+//                Log.d(ChromeApplication.TAG_RHG_GESTURE, "FlingEvent-Start: " + scrollOffsetY + ", " + scrollExtentY);
                 onScrollingStateChanged();
             }
 
             @Override
             public void onFlingEndGesture(int scrollOffsetY, int scrollExtentY)
             {
+//                Log.d(ChromeApplication.TAG_RHG_GESTURE, "FlingEvent-End: " + scrollOffsetY + ", " + scrollExtentY);
+//                if(!takeScreenshot())
+//                    Toast.makeText(getApplicationContext(), "Could not take screenshot",
+//                            Toast.LENGTH_SHORT).show();
+                onScrollingStateChanged();
+            }
+
+            @Override
+            public void onScrollEnded(int scrollOffsetY, int scrollExtentY)
+            {
+//                Log.d(ChromeApplication.TAG_RHG_GESTURE, "ScrollEvent-End: " + scrollOffsetY + ", " + scrollExtentY);
+//                takeScreenshot();
                 onScrollingStateChanged();
             }
 
             @Override
             public void onScrollStarted(int scrollOffsetY, int scrollExtentY)
             {
-                onScrollingStateChanged();
-                Log.d(ChromeApplication.TAG_RHG_SCROLL, "ScrollEvent: " + scrollOffsetY + ", " + scrollExtentY);
-                if(getWebContents() == null)
-                    return;
-                getWebContents().getContentBitmapAsync(
-                        Bitmap.Config.ARGB_8888, 1.f, new Rect(), new ContentBitmapCallback()
-                        {
-                            @Override
-                            public void onFinishGetBitmap(Bitmap bitmap, int i)
-                            {
-                                if (bitmap != null)
-                                    try
-                                    {
-                                        File file = ScreenShott.getInstance()
-                                                .saveScreenshotToPicturesFolder(getApplicationContext(), bitmap, "my_screenshot");
-                                        // Display a toast
-                                        Toast.makeText(getApplicationContext(), "Bitmap Saved at " + file.getAbsolutePath(),
-                                                Toast.LENGTH_SHORT).show();
-                                    } catch (Exception e)
-                                    {
-                                        e.printStackTrace();
-                                    }
-                            }
-                        });
-//                Bitmap bitmap = ScreenShott.getInstance().takeScreenShotOfRootView(getNativePage().getView());
-            }
-
-            @Override
-            public void onScrollEnded(int scrollOffsetY, int scrollExtentY)
-            {
+//                Log.d(ChromeApplication.TAG_RHG_GESTURE, "ScrollEvent-Start: " + scrollOffsetY + ", " + scrollExtentY);
+//                takeScreenshot();
                 onScrollingStateChanged();
             }
 
@@ -679,6 +707,9 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
 
         mTabRedirectHandler = new TabRedirectHandler(mThemedApplicationContext);
         addObserver(mTabObserver);
+
+        mRHGTabObserver= new RHGTabObserver(this);
+        addObserver(mRHGTabObserver);
 
         if (incognito)
         {
@@ -2080,6 +2111,9 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
                 mGestureStateListener = createGestureStateListener();
             }
             cvc.addGestureStateListener(mGestureStateListener);
+
+            cvc.addGestureStateListener(RHGGestureObserver.get(this));
+
         } finally
         {
             TraceEvent.end("ChromeTab.setContentViewCore");
