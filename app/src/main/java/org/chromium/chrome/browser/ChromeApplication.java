@@ -64,18 +64,22 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Messenger;
 import android.os.SystemClock;
 import android.support.multidex.MultiDex;
 import android.util.Log;
 
 import java.util.UUID;
 
+import de.rheingold.service.UploadJobService;
+
 /**
  * Basic application functionality that should be shared among all browser applications that use
  * chrome layer.
  */
 @MainDex
-public class ChromeApplication extends ContentApplication {
+public class ChromeApplication extends ContentApplication
+{
     public static final String COMMAND_LINE_FILE = "chrome-command-line";
 
     public static final String TAG = "ChromiumApplication";
@@ -83,7 +87,22 @@ public class ChromeApplication extends ContentApplication {
     public static final String TAG_RHG_GESTURE = "RHG-Gesture";
     public static final String TAG_RHG_LOGIN = "RHG-Login";
     public static final String TAG_RHG_UPLOADSERVICE = "RHG-UploadService";
+    public static final String TAG_RHG_UPLOADSERVICEMESSENGER = "RHG-UploadServiceMess.";
     public static final String TAG_RHG_TABOBSERVER = "RHG-TabObserver";
+    public static final String TAG_RHG_JOBSCHEDULER = "RHG-JobScheduler";
+    public static final String TAG_RHG_SCREENSHOT = "RHG-Screenshot";
+
+    public static final int MSG_UNCOLOR_START = 0;
+    public static final int MSG_UNCOLOR_STOP = 1;
+    public static final int MSG_COLOR_START = 2;
+    public static final int MSG_COLOR_STOP = 3;
+
+    public static final int UPLOADMSG_SUCCESS = 3;
+
+    public static final String MESSENGER_INTENT_KEY
+            = BuildConfig.APPLICATION_ID + ".MESSENGER_INTENT_KEY";
+    public static final String WORK_DURATION_KEY =
+            BuildConfig.APPLICATION_ID + ".WORK_DURATION_KEY";
 
     private static final String PREF_BOOT_TIMESTAMP =
             "com.google.android.apps.chrome.ChromeMobileApplication.BOOT_TIMESTAMP";
@@ -97,7 +116,8 @@ public class ChromeApplication extends ContentApplication {
     public static String authorization;
 
     @Override
-    protected void attachBaseContext(Context base) {
+    protected void attachBaseContext(Context base)
+    {
         super.attachBaseContext(base);
         MultiDex.install(this);
         ContextUtils.initApplicationContext(this);
@@ -107,7 +127,8 @@ public class ChromeApplication extends ContentApplication {
      * This is called during early initialization in order to set up ChildProcessLauncher
      * for certain Chrome packaging configurations
      */
-    public ChildProcessCreationParams getChildProcessCreationParams() {
+    public ChildProcessCreationParams getChildProcessCreationParams()
+    {
         return null;
     }
 
@@ -117,7 +138,8 @@ public class ChromeApplication extends ContentApplication {
      * during Chrome's lifetime.
      */
     @Override
-    public void onCreate() {
+    public void onCreate()
+    {
         UmaUtils.recordMainEntryPointTime();
         initCommandLine();
         TraceEvent.maybeEnableEarlyTracing();
@@ -135,7 +157,8 @@ public class ChromeApplication extends ContentApplication {
     /**
      * Returns a new instance of VariationsSession.
      */
-    public VariationsSession createVariationsSession() {
+    public VariationsSession createVariationsSession()
+    {
         return new VariationsSession();
     }
 
@@ -144,47 +167,58 @@ public class ChromeApplication extends ContentApplication {
      * This can be null if there are no applicable interceptor to be built.
      */
     @SuppressWarnings("unused")
-    public AuthenticatorNavigationInterceptor createAuthenticatorNavigationInterceptor(Tab tab) {
+    public AuthenticatorNavigationInterceptor createAuthenticatorNavigationInterceptor(Tab tab)
+    {
         return null;
     }
 
     /**
      * Initiate AndroidEdu device check.
+     *
      * @param callback Callback that should receive the results of the AndroidEdu device check.
      */
-    public void checkIsAndroidEduDevice(final AndroidEduOwnerCheckCallback callback) {
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
+    public void checkIsAndroidEduDevice(final AndroidEduOwnerCheckCallback callback)
+    {
+        new Handler(Looper.getMainLooper()).post(new Runnable()
+        {
             @Override
-            public void run() {
+            public void run()
+            {
                 callback.onSchoolCheckDone(false);
             }
         });
     }
 
     @CalledByNative
-    protected void showAutofillSettings() {
+    protected void showAutofillSettings()
+    {
         PreferencesLauncher.launchSettingsPage(this,
                 AutofillPreferences.class.getName());
     }
 
     @CalledByNative
-    protected void showPasswordSettings() {
+    protected void showPasswordSettings()
+    {
         PreferencesLauncher.launchSettingsPage(this,
                 SavePasswordsPreferences.class.getName());
     }
 
     @Override
-    public void initCommandLine() {
+    public void initCommandLine()
+    {
         CommandLineInitUtil.initCommandLine(this, COMMAND_LINE_FILE);
     }
 
     /**
      * Shows an error dialog following a startup error, and then exits the application.
+     *
      * @param e The exception reported by Chrome initialization.
      */
-    public static void reportStartupErrorAndExit(final ProcessInitException e) {
+    public static void reportStartupErrorAndExit(final ProcessInitException e)
+    {
         Activity activity = ApplicationStatus.getLastTrackedFocusedActivity();
-        if (ApplicationStatus.getStateForActivity(activity) == ActivityState.DESTROYED) {
+        if (ApplicationStatus.getStateForActivity(activity) == ActivityState.DESTROYED)
+        {
             return;
         }
         InvalidStartupDialog.show(activity, e.getErrorCode());
@@ -193,21 +227,27 @@ public class ChromeApplication extends ContentApplication {
     /**
      * Returns an instance of LocationSettings to be installed as a singleton.
      */
-    public LocationSettings createLocationSettings() {
+    public LocationSettings createLocationSettings()
+    {
         // Using an anonymous subclass as the constructor is protected.
         // This is done to deter instantiation of LocationSettings elsewhere without using the
         // getInstance() helper method.
-        return new LocationSettings(){};
+        return new LocationSettings()
+        {
+        };
     }
 
     /**
      * Opens the UI to clear browsing data.
+     *
      * @param tab The tab that triggered the request.
      */
     @CalledByNative
-    protected void openClearBrowsingData(Tab tab) {
+    protected void openClearBrowsingData(Tab tab)
+    {
         Activity activity = tab.getWindowAndroid().getActivity().get();
-        if (activity == null) {
+        if (activity == null)
+        {
             Log.e(TAG,
                     "Attempting to open clear browsing data for a tab without a valid activity");
             return;
@@ -219,33 +259,39 @@ public class ChromeApplication extends ContentApplication {
 
     /**
      * @return Whether parental controls are enabled.  Returning true will disable
-     *         incognito mode.
+     * incognito mode.
      */
     @CalledByNative
-    protected boolean areParentalControlsEnabled() {
+    protected boolean areParentalControlsEnabled()
+    {
         return PartnerBrowserCustomizations.isIncognitoDisabled();
     }
 
     /**
-     * @return A provider of external estimates.
      * @param nativePtr Pointer to the native ExternalEstimateProviderAndroid object.
+     * @return A provider of external estimates.
      */
-    public ExternalEstimateProviderAndroid createExternalEstimateProviderAndroid(long nativePtr) {
-        return new ExternalEstimateProviderAndroid(nativePtr) {};
+    public ExternalEstimateProviderAndroid createExternalEstimateProviderAndroid(long nativePtr)
+    {
+        return new ExternalEstimateProviderAndroid(nativePtr)
+        {
+        };
     }
 
     /**
-     * @return An external observer of data use.
      * @param nativePtr Pointer to the native ExternalDataUseObserver object.
+     * @return An external observer of data use.
      */
-    public ExternalDataUseObserver createExternalDataUseObserver(long nativePtr) {
+    public ExternalDataUseObserver createExternalDataUseObserver(long nativePtr)
+    {
         return new ExternalDataUseObserver(nativePtr);
     }
 
     /**
      * @return The user agent string of Chrome.
      */
-    public static String getBrowserUserAgent() {
+    public static String getBrowserUserAgent()
+    {
         return nativeGetBrowserUserAgent();
     }
 
@@ -254,11 +300,14 @@ public class ChromeApplication extends ContentApplication {
      * all state is saved when the app is suspended.  Calling ChromiumApplication.onStop() does
      * this for you.
      */
-    public static void flushPersistentData() {
-        try {
+    public static void flushPersistentData()
+    {
+        try
+        {
             TraceEvent.begin("ChromiumApplication.flushPersistentData");
             nativeFlushPersistentData();
-        } finally {
+        } finally
+        {
             TraceEvent.end("ChromiumApplication.flushPersistentData");
         }
     }
@@ -270,14 +319,16 @@ public class ChromeApplication extends ContentApplication {
      * by one hour.  However, this should only happen at most once when the clock changes since the
      * updated timestamp is immediately saved.
      */
-    public static void removeSessionCookies() {
+    public static void removeSessionCookies()
+    {
         long lastKnownBootTimestamp =
                 ContextUtils.getAppSharedPreferences().getLong(PREF_BOOT_TIMESTAMP, 0);
         long bootTimestamp = System.currentTimeMillis() - SystemClock.uptimeMillis();
         long difference = bootTimestamp - lastKnownBootTimestamp;
 
         // Allow some leeway to account for fractions of milliseconds.
-        if (Math.abs(difference) > BOOT_TIMESTAMP_MARGIN_MS) {
+        if (Math.abs(difference) > BOOT_TIMESTAMP_MARGIN_MS)
+        {
             nativeRemoveSessionCookies();
 
             SharedPreferences prefs = ContextUtils.getAppSharedPreferences();
@@ -288,27 +339,32 @@ public class ChromeApplication extends ContentApplication {
     }
 
     private static native void nativeRemoveSessionCookies();
+
     private static native String nativeGetBrowserUserAgent();
+
     private static native void nativeFlushPersistentData();
 
     /**
      * @return An instance of {@link FeedbackReporter} to report feedback.
      */
-    public FeedbackReporter createFeedbackReporter() {
+    public FeedbackReporter createFeedbackReporter()
+    {
         return new EmptyFeedbackReporter();
     }
 
     /**
      * @return An instance of ExternalAuthUtils to be installed as a singleton.
      */
-    public ExternalAuthUtils createExternalAuthUtils() {
+    public ExternalAuthUtils createExternalAuthUtils()
+    {
         return new ExternalAuthUtils();
     }
 
     /**
      * Returns a new instance of HelpAndFeedback.
      */
-    public HelpAndFeedback createHelpAndFeedback() {
+    public HelpAndFeedback createHelpAndFeedback()
+    {
         return new HelpAndFeedback();
     }
 
@@ -316,50 +372,58 @@ public class ChromeApplication extends ContentApplication {
      * @return An instance of {@link CustomTabsConnection}. Should not be called
      * outside of {@link CustomTabsConnection#getInstance()}.
      */
-    public CustomTabsConnection createCustomTabsConnection() {
+    public CustomTabsConnection createCustomTabsConnection()
+    {
         return new CustomTabsConnection(this);
     }
 
     /**
      * @return A new {@link PhysicalWebBleClient} instance.
      */
-    public PhysicalWebBleClient createPhysicalWebBleClient() {
+    public PhysicalWebBleClient createPhysicalWebBleClient()
+    {
         return new PhysicalWebBleClient();
     }
 
     /**
      * @return A new {@link PhysicalWebEnvironment} instance.
      */
-    public PhysicalWebEnvironment createPhysicalWebEnvironment() {
+    public PhysicalWebEnvironment createPhysicalWebEnvironment()
+    {
         return new PhysicalWebEnvironment();
     }
 
-    public InstantAppsHandler createInstantAppsHandler() {
+    public InstantAppsHandler createInstantAppsHandler()
+    {
         return new InstantAppsHandler();
     }
 
     /**
      * @return An instance of {@link GSAHelper} that handles the start point of chrome's integration
-     *         with GSA.
+     * with GSA.
      */
-    public GSAHelper createGsaHelper() {
+    public GSAHelper createGsaHelper()
+    {
         return new GSAHelper();
     }
 
     /**
      * @return An instance of {@link LocaleManager} that handles customized locale related logic.
      */
-    public LocaleManager createLocaleManager() {
+    public LocaleManager createLocaleManager()
+    {
         return new LocaleManager();
     }
 
-   /**
+    /**
      * Registers various policy providers with the policy manager.
      * Providers are registered in increasing order of precedence so overrides should call this
      * method in the end for this method to maintain the highest precedence.
+     *
      * @param combinedProvider The {@link CombinedPolicyProvider} to register the providers with.
      */
-    public void registerPolicyProviders(CombinedPolicyProvider combinedProvider) {
+    public void registerPolicyProviders(CombinedPolicyProvider combinedProvider)
+    {
         combinedProvider.registerProvider(new AppRestrictionsProvider(getApplicationContext()));
     }
 
@@ -367,59 +431,70 @@ public class ChromeApplication extends ContentApplication {
      * @return An instance of PolicyAuditor that notifies the policy system of the user's activity.
      * Only applicable when the user has a policy active, that is tracking the activity.
      */
-    public PolicyAuditor getPolicyAuditor() {
+    public PolicyAuditor getPolicyAuditor()
+    {
         // This class has a protected constructor to prevent accidental instantiation.
-        return new PolicyAuditor() {};
+        return new PolicyAuditor()
+        {
+        };
     }
 
     /**
      * @return An instance of MultiWindowUtils to be installed as a singleton.
      */
-    public MultiWindowUtils createMultiWindowUtils() {
+    public MultiWindowUtils createMultiWindowUtils()
+    {
         return new MultiWindowUtils();
     }
 
     /**
      * @return An instance of RequestGenerator to be used for Omaha XML creation.  Will be null if
-     *         a generator is unavailable.
+     * a generator is unavailable.
      */
-    public RequestGenerator createOmahaRequestGenerator() {
+    public RequestGenerator createOmahaRequestGenerator()
+    {
         return null;
     }
 
     /**
      * @return An instance of GmsCoreSyncListener to notify GmsCore of sync encryption key changes.
-     *         Will be null if one is unavailable.
+     * Will be null if one is unavailable.
      */
-    public GmsCoreSyncListener createGmsCoreSyncListener() {
+    public GmsCoreSyncListener createGmsCoreSyncListener()
+    {
         return null;
     }
 
     /**
-    * @return An instance of GoogleActivityController.
-    */
-    public GoogleActivityController createGoogleActivityController() {
+     * @return An instance of GoogleActivityController.
+     */
+    public GoogleActivityController createGoogleActivityController()
+    {
         return new GoogleActivityController();
     }
 
     /**
      * @return An instance of AppDetailsDelegate that can be queried about app information for the
-     *         App Banner feature.  Will be null if one is unavailable.
+     * App Banner feature.  Will be null if one is unavailable.
      */
-    public AppDetailsDelegate createAppDetailsDelegate() {
+    public AppDetailsDelegate createAppDetailsDelegate()
+    {
         return null;
     }
 
     /**
      * Returns the Singleton instance of the DocumentTabModelSelector.
      * TODO(dfalcantara): Find a better place for this once we differentiate between activity and
-     *                    application-level TabModelSelectors.
+     * application-level TabModelSelectors.
+     *
      * @return The DocumentTabModelSelector for the application.
      */
     @SuppressFBWarnings("LI_LAZY_INIT_STATIC")
-    public static DocumentTabModelSelector getDocumentTabModelSelector() {
+    public static DocumentTabModelSelector getDocumentTabModelSelector()
+    {
         ThreadUtils.assertOnUiThread();
-        if (sDocumentTabModelSelector == null) {
+        if (sDocumentTabModelSelector == null)
+        {
             ActivityDelegateImpl activityDelegate = new ActivityDelegateImpl(
                     DocumentActivity.class, IncognitoDocumentActivity.class);
             sDocumentTabModelSelector = new DocumentTabModelSelector(activityDelegate,
@@ -431,15 +506,18 @@ public class ChromeApplication extends ContentApplication {
     /**
      * @return An instance of RevenueStats to be installed as a singleton.
      */
-    public RevenueStats createRevenueStatsInstance() {
+    public RevenueStats createRevenueStatsInstance()
+    {
         return new RevenueStats();
     }
 
     /**
      * Creates a new {@link AccountManagerDelegate}.
+     *
      * @return the created {@link AccountManagerDelegate}.
      */
-    public AccountManagerDelegate createAccountManagerDelegate() {
+    public AccountManagerDelegate createAccountManagerDelegate()
+    {
         return new SystemAccountManagerDelegate(this);
     }
 }

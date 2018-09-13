@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,6 +41,29 @@ import java.util.UUID;
  */
 public class UploadService extends IntentService
 {
+
+    public class RHGMessage
+    {
+        public RHGMessage(File file, Bitmap bitmap, String screenshotBytes, String url, String reason, String tabId)
+        {
+            this.file = file;
+            this.bitmap = bitmap;
+            this.screenshotBytes = screenshotBytes;
+            this.url = url;
+            this.reason = reason;
+            this.tabId = tabId;
+        }
+
+        File file = null;
+        Bitmap bitmap = null;
+        String screenshotBytes = null;
+        String url = null;
+        String reason = null;
+        String tabId = null;
+    }
+
+    ArrayList <RHGMessage> messages = new ArrayList<RHGMessage>();
+
     File file = null;
     Bitmap bitmap = null;
     String screenshotBytes = null;
@@ -79,13 +103,13 @@ public class UploadService extends IntentService
             return;
         }
 
-        if (file != null && file.getAbsolutePath().length() > 0 )
+        if (file != null && file.getAbsolutePath().length() > 0)
         {
             Log.d(ChromeApplication.TAG_RHG_UPLOADSERVICE, "Bitmap received at " + file.getAbsolutePath());
             try
             {
                 bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
-                if(bitmap != null)
+                if (bitmap != null)
                 {
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);

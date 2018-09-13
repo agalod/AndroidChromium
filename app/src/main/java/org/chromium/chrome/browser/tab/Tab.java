@@ -15,6 +15,8 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Messenger;
 import android.provider.Browser;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -116,6 +118,10 @@ import java.util.List;
 
 import de.rheingold.observers.RHGGestureObserver;
 import de.rheingold.observers.RHGTabObserver;
+import de.rheingold.service.UploadJobService;
+import de.rheingold.service.UploadJobServiceMessenger;
+
+import static org.chromium.chrome.browser.ChromeApplication.MESSENGER_INTENT_KEY;
 
 /**
  * The basic Java representation of a tab.  Contains and manages a {@link ContentView}.
@@ -219,6 +225,8 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
      * Listens to gesture events fired by the ContentViewCore.
      */
     private GestureStateListener mGestureStateListener;
+
+    private RHGGestureObserver mGestureStateListenerRHG;
 
     /**
      * The parent view of the ContentView and the InfoBarContainer.
@@ -414,6 +422,12 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
     private RHGTabObserver mRHGTabObserver;
 
     private RHGGestureObserver mRHGGestureStateListener;
+
+    public static int jobIdCounter = 0;
+
+    public Handler uploadServiceMessengerHandler;
+
+    public String lastGesture = "";
 
     /**
      * Whether or not the tab closing the tab can send the user back to the app that opened it.
@@ -708,8 +722,22 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
         mTabRedirectHandler = new TabRedirectHandler(mThemedApplicationContext);
         addObserver(mTabObserver);
 
+        // ----------------------------------------------------
+        // RHG
+        // ----------------------------------------------------
         mRHGTabObserver= new RHGTabObserver(this);
         addObserver(mRHGTabObserver);
+
+        Intent startServiceIntent = new Intent(mThemedApplicationContext, UploadJobService.class);
+        uploadServiceMessengerHandler = new UploadJobServiceMessenger(getActivity());
+        Messenger messengerIncoming = new Messenger(uploadServiceMessengerHandler);
+        startServiceIntent.putExtra(MESSENGER_INTENT_KEY, messengerIncoming);
+        if(mThemedApplicationContext.startService(startServiceIntent) == null)
+            Log.d(ChromeApplication.TAG_RHG_JOBSCHEDULER, "Could not start job scheduler");
+        else
+            Log.d(ChromeApplication.TAG_RHG_JOBSCHEDULER, "Job scheduler initialized");
+
+        // ----------------------------------------------------
 
         if (incognito)
         {
@@ -2112,7 +2140,9 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
             }
             cvc.addGestureStateListener(mGestureStateListener);
 
-            cvc.addGestureStateListener(RHGGestureObserver.get(this));
+            mGestureStateListenerRHG = new RHGGestureObserver(this);
+
+            cvc.addGestureStateListener(mGestureStateListenerRHG.get(this));
 
         } finally
         {

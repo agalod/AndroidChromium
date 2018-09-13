@@ -160,8 +160,9 @@ by a child template that "extends" this file.
             android:theme="@style/Theme.AppCompat.NoActionBar">
         </activity>
 
-        <service android:name="de.rheingold.service.UploadService">
-        </service>
+        <service android:name="de.rheingold.service.UploadJobService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="true"/>
 
         <activity-alias
             android:name="com.google.android.apps.chrome.Main"
