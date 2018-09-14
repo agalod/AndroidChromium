@@ -81,7 +81,12 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             e.printStackTrace();
         }
 
-        IpInfo.sendAlive(this, getLocalClassName());
+        String functionName = getClass().getName() + " - " + new Object()
+        {
+        }.getClass().getEnclosingMethod().getName();
+//        Log.d(ChromeApplication.TAG_RHG_TABOBSERVER, functionName);
+
+        IpInfo.sendAlive(this, functionName);
         SSLUtils.nuke();
     }
 
@@ -219,7 +224,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 if (json != null && studyName != null)
                 {
                     Log.d(ChromeApplication.TAG_RHG_LOGIN, "Manifest loaded: " + json);
-                    TLookup.setContent(json);
+                    if(!TLookup.setContent(json))
+                        ;
+//                        Toast.makeText(getApplicationContext(), "Error: could not write manifest to database.", Toast.LENGTH_LONG).show();
                     Toast.makeText(getApplicationContext(), studyName, Toast.LENGTH_LONG).show();
                     Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
                     LoginActivity.this.startActivity(browserIntent);

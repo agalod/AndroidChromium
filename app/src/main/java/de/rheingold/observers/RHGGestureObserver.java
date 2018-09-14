@@ -117,7 +117,7 @@ public class RHGGestureObserver
                                 {
                                 }.getClass().getEnclosingMethod().getName();
                                 Log.d(ChromeApplication.TAG_RHG_SCREENSHOT, functionName + ": " + (i==0?"OK":"FAILED:"+i) + " - " + bitmap);
-                                if (bitmap == null)
+                                if (bitmap == null && i < 2)
                                     takeScreenshot(reason);
                                 else
                                 {

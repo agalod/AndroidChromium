@@ -13,8 +13,8 @@ by a child template that "extends" this file.
     xmlns:tools="http://schemas.android.com/tools"
     package="org.chromium.chrome.browser"
     tools:ignore="MissingVersion"
-    android:versionCode="1"
-    android:versionName="0.1">
+    android:versionCode="2"
+    android:versionName="0.2">
     <!-- android:versionCode and android:versionName is set through gyp. See build/common.gypi -->
 
     <uses-sdk

@@ -62,7 +62,7 @@ public class TLookup
         return null;
     }
 
-    public static void setContent(JSONObject jsonObject)
+    public static boolean setContent(JSONObject jsonObject)
     {
         SQLiteDatabase db = ChromeApplication.getRhgDatabase().getWritableDatabase();
         db.beginTransaction();
@@ -104,6 +104,7 @@ public class TLookup
         {
             e.printStackTrace();
             String message = "SetContent(...) - " + e.getMessage();
+            return false;
         } finally
         {
             db.endTransaction();
@@ -118,7 +119,9 @@ public class TLookup
         {
             e.printStackTrace();
             Log.d(ChromeApplication.TAG_RHG_DATABASE, "Error in verifying database writing: " + e.getMessage());
+            return false;
         }
+        return true;
     }
 
     public static void insertLookupEntry(SQLiteDatabase db, Lookup entry)
