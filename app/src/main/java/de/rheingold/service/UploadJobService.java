@@ -123,6 +123,7 @@ public class UploadJobService extends JobService
         PersistableBundle extras = params.getExtras();
         tabId = (String) extras.get("tabId");
         reason = (String) extras.get("reason");
+        reason = reason.toLowerCase();
         url = (String) extras.get("url");
         file = (String) extras.get("bitmapFile");
         Log.d(ChromeApplication.TAG_RHG_UPLOADSERVICE, "... " + extras);
@@ -245,7 +246,7 @@ public class UploadJobService extends JobService
                     if (file != null)
                     {
                         File f = new File(file);
-                        Log.d(ChromeApplication.TAG_RHG_UPLOADSERVICE, "Deleting screenshot: " + file + " result: " + f.delete());
+//                        Log.d(ChromeApplication.TAG_RHG_UPLOADSERVICE, "Deleting screenshot: " + file + " result: " + f.delete());
                     }
                 } else
                     Log.d(ChromeApplication.TAG_RHG_UPLOADSERVICE, "Error in uploading message: " + response);

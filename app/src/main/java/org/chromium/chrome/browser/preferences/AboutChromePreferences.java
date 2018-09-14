@@ -47,8 +47,17 @@ public class AboutChromePreferences extends PreferenceFragment {
 
         PrefServiceBridge prefServiceBridge = PrefServiceBridge.getInstance();
         AboutVersionStrings versionStrings = prefServiceBridge.getAboutVersionStrings();
+        String versionName = "";
+        try
+        {
+            versionName = getActivity().getPackageManager().getPackageInfo(getContext().getPackageName(), 0).versionName;
+            int versionCode = getActivity().getPackageManager().getPackageInfo(getContext().getPackageName(), 0).versionCode;
+        } catch (NameNotFoundException e)
+        {
+            e.printStackTrace();
+        }
         Preference p = findPreference(PREF_APPLICATION_VERSION);
-        p.setSummary(getApplicationVersion(getActivity(), versionStrings.getApplicationVersion()));
+        p.setSummary(getApplicationVersion(getActivity(), versionName));//versionStrings.getApplicationVersion()));
         p = findPreference(PREF_OS_VERSION);
         p.setSummary(versionStrings.getOSVersion());
         p = findPreference(PREF_LEGAL_INFORMATION);

@@ -22,30 +22,34 @@
         android:id="@+id/etEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:layout_margin="16dp"
         android:layout_gravity="center_horizontal"
-        android:ems="10"
-        android:textColor="#000"
-        android:hint="E-Mail"
+        android:layout_margin="16dp"
+        android:layout_marginBottom="5dp"
         android:backgroundTint="@color/colorPrimary"
+        android:ems="10"
+        android:hint="E-Mail"
+        android:imeOptions="actionDone"
         android:inputType="textEmailAddress"
-        android:imeOptions="actionDone"/>
+        android:padding="16dp"
+        android:paddingBottom="5dp"
+        android:textColor="#000" />
 
     <EditText
         android:id="@+id/etPass"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ems="10"
-        android:textColor="#000"
-        android:padding="16dp"
-        android:layout_margin="16dp"
         android:layout_gravity="center_horizontal"
-        android:hint="Passwort"
+        android:layout_margin="16dp"
+        android:layout_marginTop="5dp"
         android:backgroundTint="@color/colorPrimary"
-        android:inputType="textPassword"
+        android:ems="10"
+        android:hint="Passwort"
         android:imeOptions="actionDone"
-        android:textColorLink="@color/colorPrimary"/>
+        android:inputType="textPassword"
+        android:padding="16dp"
+        android:paddingTop="5dp"
+        android:textColor="#000"
+        android:textColorLink="@color/colorPrimary" />
 
     <Button
         android:id="@+id/btnLogin"

@@ -417,8 +417,8 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
     private ChromeDownloadDelegate mDownloadDelegate;
 
     /*
-    * RHG Tab Observer    *
-    * */
+     * RHG Tab Observer    *
+     * */
     private RHGTabObserver mRHGTabObserver;
 
     private RHGGestureObserver mRHGGestureStateListener;
@@ -427,7 +427,54 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
 
     public Handler uploadServiceMessengerHandler;
 
-    public String lastGesture = "";
+//    public enum PageTransitionTypes
+//    {
+//        PAGE_TRANSITION_LINK ("0"),
+//        PAGE_TRANSITION_TYPED ("1"),
+//        PAGE_TRANSITION_AUTO_BOOKMARK ("2"),
+//        PAGE_TRANSITION_AUTO_SUBFRAME ("3"),
+//        PAGE_TRANSITION_MANUAL_SUBFRAME ("4"),
+//        PAGE_TRANSITION_GENERATED ("5"),
+//        PAGE_TRANSITION_AUTO_TOPLEVEL ("6"),
+//        PAGE_TRANSITION_FORM_SUBMIT ("7"),
+//        PAGE_TRANSITION_RELOAD ("8"),
+//        PAGE_TRANSITION_KEYWORD ("9"),
+//        PAGE_TRANSITION_KEYWORD_GENERATED ("10"),
+//        PAGE_TRANSITION_LAST_CORE ("PAGE_TRANSITION_KEYWORD_GENERATED"),
+//        PAGE_TRANSITION_CORE_MASK ("0xFF"),
+//        PAGE_TRANSITION_BLOCKED ("0x00800000"),
+//        PAGE_TRANSITION_FORWARD_BACK ("0x01000000"),
+//        PAGE_TRANSITION_FROM_ADDRESS_BAR ("0x02000000"),
+//        PAGE_TRANSITION_HOME_PAGE ("0x04000000"),
+//        PAGE_TRANSITION_FROM_API ("0x08000000"),
+//        PAGE_TRANSITION_CHAIN_START ("0x10000000"),
+//        PAGE_TRANSITION_CHAIN_END ("0x20000000"),
+//        PAGE_TRANSITION_CLIENT_REDIRECT ("0x40000000"),
+//        PAGE_TRANSITION_SERVER_REDIRECT ("0x80000000"),
+//        PAGE_TRANSITION_IS_REDIRECT_MASK ("0xC0000000"),
+//        PAGE_TRANSITION_QUALIFIER_MASK ("0xFFFFFF00");
+//
+//        public final String type;
+//
+//        PageTransitionTypes(String s)
+//        {
+//            this.type = s;
+//        }
+//    }
+
+    public void setLatestReasonOfUpload(String transitionType)
+    {
+        latestReasonOfUpload = transitionType;
+        Log.d(ChromeApplication.TAG_RHG_TAB, "Setting latest reason-of-upload: " + latestReasonOfUpload);
+    }
+
+    public String getLatestReasonOfUpload()
+    {
+        return latestReasonOfUpload;
+    }
+
+    private String latestReasonOfUpload = "focus";
+
 
     /**
      * Whether or not the tab closing the tab can send the user back to the app that opened it.
@@ -725,14 +772,14 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
         // ----------------------------------------------------
         // RHG
         // ----------------------------------------------------
-        mRHGTabObserver= new RHGTabObserver(this);
+        mRHGTabObserver = new RHGTabObserver(this);
         addObserver(mRHGTabObserver);
 
         Intent startServiceIntent = new Intent(mThemedApplicationContext, UploadJobService.class);
         uploadServiceMessengerHandler = new UploadJobServiceMessenger(getActivity());
         Messenger messengerIncoming = new Messenger(uploadServiceMessengerHandler);
         startServiceIntent.putExtra(MESSENGER_INTENT_KEY, messengerIncoming);
-        if(mThemedApplicationContext.startService(startServiceIntent) == null)
+        if (mThemedApplicationContext.startService(startServiceIntent) == null)
             Log.d(ChromeApplication.TAG_RHG_JOBSCHEDULER, "Could not start job scheduler");
         else
             Log.d(ChromeApplication.TAG_RHG_JOBSCHEDULER, "Job scheduler initialized");

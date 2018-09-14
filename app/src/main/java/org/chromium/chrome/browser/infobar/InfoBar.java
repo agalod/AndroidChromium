@@ -6,6 +6,7 @@ package org.chromium.chrome.browser.infobar;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -159,6 +160,13 @@ public abstract class InfoBar implements InfoBarView {
 
     @Override
     public void onLinkClicked() {
+        String functionName = new Object()
+        {
+        }.getClass().getEnclosingMethod().getName();
+        Log.d(new Object()
+        {
+        }.getClass().getName(), functionName);
+
         if (mNativeInfoBarPtr != 0) nativeOnLinkClicked(mNativeInfoBarPtr);
     }
 

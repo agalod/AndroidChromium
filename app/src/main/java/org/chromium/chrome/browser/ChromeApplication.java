@@ -91,6 +91,10 @@ public class ChromeApplication extends ContentApplication
     public static final String TAG_RHG_TABOBSERVER = "RHG-TabObserver";
     public static final String TAG_RHG_JOBSCHEDULER = "RHG-JobScheduler";
     public static final String TAG_RHG_SCREENSHOT = "RHG-Screenshot";
+    public static final String TAG_RHG_URLBAR = "RHG-UrlBar";
+
+    public static final boolean rhgDebugMode = false;
+    public static final boolean rhgScreenshots = true;
 
     public static final int MSG_UNCOLOR_START = 0;
     public static final int MSG_UNCOLOR_STOP = 1;

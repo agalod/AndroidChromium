@@ -1,3 +1,5 @@
+import com.android.builder.core.DefaultManifestParser
+
 apply plugin: 'com.android.application'
 
 android {
@@ -8,7 +10,7 @@ android {
     enforceUniquePackageName false
 
     defaultConfig {
-        applicationId "org.chromium.chrome.browser"
+        applicationId "org.chromium.chrome.browser.rheingold"
         minSdkVersion 21
         targetSdkVersion 25
         versionCode 1
@@ -42,6 +44,14 @@ android {
     lintOptions {
         abortOnError false
     }
+
+    def formattedDate = new Date().format('yyMMdd')
+    def manifestParser = new DefaultManifestParser(android.sourceSets.main.manifest.srcFile)
+
+    String versionName = manifestParser.getVersionName()
+    String versionCode = manifestParser.getVersionCode()
+    def filePrefix = parent.name + "_" + versionName + "_" + versionCode + "_" + formattedDate
+    setProperty("archivesBaseName", filePrefix)
 }
 
 dependencies {

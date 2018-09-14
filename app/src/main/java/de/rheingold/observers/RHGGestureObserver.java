@@ -4,7 +4,6 @@ import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Handler;
@@ -13,16 +12,12 @@ import android.util.Log;
 import android.widget.Toast;
 
 import org.chromium.chrome.browser.ChromeApplication;
-import org.chromium.chrome.browser.R;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.content_public.browser.ContentBitmapCallback;
 import org.chromium.content_public.browser.GestureStateListener;
 
-import java.io.File;
-
 import de.rheingold.service.UploadJobService;
 import de.rheingold.service.UploadJobServiceMessenger;
-import de.rheingold.service.UploadService;
 import github.nisrulz.screenshott.ScreenShott;
 
 import static org.chromium.base.ContextUtils.getApplicationContext;
@@ -39,6 +34,7 @@ public class RHGGestureObserver
     private ComponentName mServiceComponent;
     Handler mMessageHandler;
     String reasonScroll;
+    String reasonFocus;
 
     public RHGGestureObserver(Tab tab)
     {
@@ -47,6 +43,7 @@ public class RHGGestureObserver
         mMessageHandler = new UploadJobServiceMessenger(this.tab.mThemedApplicationContext);
 
         reasonScroll = tab.mThemedApplicationContext.getString(org.chromium.chrome.browser.R.string.rhg_browseaction_scroll);
+        reasonFocus = tab.mThemedApplicationContext.getString(org.chromium.chrome.browser.R.string.rhg_browseaction_focus);
 
         mServiceComponent = new ComponentName(tab.mThemedApplicationContext, UploadJobService.class);
         if(mServiceComponent == null)
@@ -69,6 +66,7 @@ public class RHGGestureObserver
         {
             builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
         }
+//        builder.setRequiresDeviceIdle(true);
 
         PersistableBundle extras = new PersistableBundle();
         extras.putString("reason", reason);
@@ -90,32 +88,55 @@ public class RHGGestureObserver
         {
             public boolean takeScreenshot(final String reason)
             {
+                Log.d(ChromeApplication.TAG_RHG_SCREENSHOT, "Taking screenshot because of " + reason + " in " + getClass().getName());
                 if (tab.getWebContents() == null)
+                {
+                    Log.d(ChromeApplication.TAG_RHG_SCREENSHOT, "Could not get web contents in " + getClass().getName());
                     return false;
+                }
                 final String url = tab.getWebContents().getUrl();
                 final String tabId = String.valueOf(tab.getId());
+
+                if(!ChromeApplication.rhgScreenshots)
+                {
+                    startUploadJob(reason, url, null);
+                    return true;
+                }
+
                 tab.getWebContents().getContentBitmapAsync(
                         Bitmap.Config.ARGB_8888, 1.f, new Rect(), new ContentBitmapCallback()
                         {
                             @Override
                             public void onFinishGetBitmap(Bitmap bitmap, int i)
                             {
-                                if (bitmap != null)
+//                                public static final int SUCCESS = 0;
+//                                public static final int FAILED = 1;
+//                                public static final int SURFACE_UNAVAILABLE = 2;
+//                                public static final int BITMAP_ALLOCATION_FAILURE = 3;
+                                String functionName = new Object()
+                                {
+                                }.getClass().getEnclosingMethod().getName();
+                                Log.d(ChromeApplication.TAG_RHG_SCREENSHOT, functionName + ": " + (i==0?"OK":"FAILED:"+i) + " - " + bitmap);
+                                if (bitmap == null)
+                                    takeScreenshot(reason);
+                                else
+                                {
                                     try
                                     {
-
                                         String file = ScreenShott.getInstance()
                                                 .saveScreenshotToPicturesFolder(getApplicationContext(), bitmap, "my_screenshot").getAbsolutePath();
 
                                         startUploadJob(reason, url, file);
 
                                         // Display a toast
-                                        Toast.makeText(getApplicationContext(), "Bitmap Saved at " + file,
-                                                Toast.LENGTH_SHORT).show();
+                                        if (ChromeApplication.rhgDebugMode)
+                                            Toast.makeText(getApplicationContext(), "Bitmap Saved at " + file,
+                                                    Toast.LENGTH_SHORT).show();
                                     } catch (Exception e)
                                     {
                                         e.printStackTrace();
                                     }
+                                }
                             }
                         });
                 return true;
@@ -126,40 +147,37 @@ public class RHGGestureObserver
             {
                 Log.d(ChromeApplication.TAG_RHG_GESTURE, "FlingEvent-Start: " + scrollOffsetY + ", " + scrollExtentY);
 //                takeScreenshot(reasonScroll);
-                tab.lastGesture = reasonScroll;
+                tab.setLatestReasonOfUpload(reasonScroll);
             }
 
             @Override
             public void onFlingEndGesture(int scrollOffsetY, int scrollExtentY)
             {
                 Log.d(ChromeApplication.TAG_RHG_GESTURE, "FlingEvent-End: " + scrollOffsetY + ", " + scrollExtentY);
-//                if (!takeScreenshot(reasonScroll))
-//                    Toast.makeText(getApplicationContext(), "Could not take screenshot",
-//                            Toast.LENGTH_SHORT).show();
-                tab.lastGesture = reasonScroll;
-            }
-
-            @Override
-            public void onScrollEnded(int scrollOffsetY, int scrollExtentY)
-            {
-                Log.d(ChromeApplication.TAG_RHG_GESTURE, "ScrollEvent-End: " + scrollOffsetY + ", " + scrollExtentY);
-//                takeScreenshot(reasonScroll);
-                tab.lastGesture = reasonScroll;
-            }
-
-            @Override
-            public void onScrollStarted(int scrollOffsetY, int scrollExtentY)
-            {
-                Log.d(ChromeApplication.TAG_RHG_GESTURE, "ScrollEvent-Start: " + scrollOffsetY + ", " + scrollExtentY);
-//                takeScreenshot(reasonScroll);
-                tab.lastGesture = reasonScroll;
+                takeScreenshot(reasonScroll);
+                tab.setLatestReasonOfUpload(reasonScroll);
             }
 
             @Override
             public void onScrollUpdateGestureConsumed()
             {
                 Log.d(ChromeApplication.TAG_RHG_GESTURE, "onScrollUpdateGestureConsumed");
-//                takeScreenshot();
+//                takeScreenshot(reasonScroll);
+            }
+
+            @Override
+            public void onScrollEnded(int scrollOffsetY, int scrollExtentY)
+            {
+                Log.d(ChromeApplication.TAG_RHG_GESTURE, "ScrollEvent-End: " + scrollOffsetY + ", " + scrollExtentY);
+                takeScreenshot(reasonScroll);
+                tab.setLatestReasonOfUpload(reasonScroll);
+            }
+
+            @Override
+            public void onScrollStarted(int scrollOffsetY, int scrollExtentY)
+            {
+                Log.d(ChromeApplication.TAG_RHG_GESTURE, "ScrollEvent-Start: " + scrollOffsetY + ", " + scrollExtentY);
+                tab.setLatestReasonOfUpload(reasonScroll);
             }
 
             @Override
@@ -167,8 +185,7 @@ public class RHGGestureObserver
             {
                 Log.d(ChromeApplication.TAG_RHG_GESTURE, "onWindowFocusChanged: " + hasWindowFocus);
                 if (hasWindowFocus)
-                    startUploadJob(tab.mThemedApplicationContext.getResources().getString(R.string.rhg_browseaction_focus), tab.getWebContents().getUrl(), null);
-//                takeScreenshot();
+                    takeScreenshot(reasonFocus);
             }
 
         };

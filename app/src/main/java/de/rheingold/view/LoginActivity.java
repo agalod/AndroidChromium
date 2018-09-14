@@ -83,15 +83,20 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case 0: {
+                                           String permissions[], int[] grantResults)
+    {
+        switch (requestCode)
+        {
+            case 0:
+            {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                {
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
-                } else {
+                } else
+                {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
                     finish();
@@ -147,8 +152,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 if (json != null && studyId != null)
                 {
                     String message = "Erfolgreich eingeloggt. Studien-ID = " + studyId;
+                    if (ChromeApplication.rhgDebugMode)
+                        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
                     Log.d(ChromeApplication.TAG_RHG_LOGIN, message);
-                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
                     Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
                     LoginActivity.this.startActivity(browserIntent);
                 }

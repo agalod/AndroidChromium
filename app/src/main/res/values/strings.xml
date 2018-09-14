@@ -56,4 +56,5 @@
     <string name="rhg_browseaction_scroll">scrolled</string>
     <string name="rhg_browseaction_link">link</string>
     <string name="rhg_browseaction_focus">focus</string>
+    <string name="rhg_browseaction_typed">typed</string>
 </resources>

@@ -4,7 +4,6 @@ import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Handler;
@@ -14,7 +13,6 @@ import android.view.ContextMenu;
 import android.widget.Toast;
 
 import org.chromium.chrome.browser.ChromeApplication;
-import org.chromium.chrome.browser.R;
 import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.tab.TabObserver;
 import org.chromium.content_public.browser.ContentBitmapCallback;
@@ -39,40 +37,63 @@ public class RHGTabObserver implements TabObserver
     public String loadedUrl = "";
     private ComponentName mServiceComponent;
     Handler mMessageHandler;
-    String RHGreasonScroll;
-    String RHGreasonLink;
+    String reasonScroll;
+    String reasonLink;
+    String reasonTyped;
 
     public boolean takeScreenshot(final String reason)
     {
-        Log.d(ChromeApplication.TAG_RHG_SCREENSHOT, "Taking screenshot in " + getClass().getName());
+        String functionName = new Object()
+        {
+        }.getClass().getEnclosingMethod().getName();
+        Log.d(ChromeApplication.TAG_RHG_TABOBSERVER, "Taking screenshot because of " + reason + " in " + getClass().getName());
+
+
         if (tab.getWebContents() == null)
         {
+            Log.d(ChromeApplication.TAG_RHG_TABOBSERVER, "Could not get web contents in " + getClass().getName());
             return false;
         }
         final String url = tab.getWebContents().getUrl();
         final String tabId = String.valueOf(tab.getId());
+        if(!ChromeApplication.rhgScreenshots)
+        {
+            startUploadJob(reason, url, null);
+            return true;
+        }
+
         tab.getWebContents().getContentBitmapAsync(
                 Bitmap.Config.ARGB_8888, 1.f, new Rect(), new ContentBitmapCallback()
                 {
                     @Override
                     public void onFinishGetBitmap(Bitmap bitmap, int i)
                     {
+                        String functionName = new Object()
+                        {
+                        }.getClass().getEnclosingMethod().getName();
+                        Log.d(ChromeApplication.TAG_RHG_SCREENSHOT, functionName + ": " + (i == 0 ? "OK" : "FAILED:" + i) + " - " + bitmap);
+
                         if (bitmap != null)
+                        {
                             try
                             {
-
                                 String file = ScreenShott.getInstance()
                                         .saveScreenshotToPicturesFolder(getApplicationContext(), bitmap, "my_screenshot").getAbsolutePath();
 
                                 startUploadJob(reason, url, file);
 
                                 // Display a toast
-                                Toast.makeText(getApplicationContext(), "Bitmap Saved at " + file,
-                                        Toast.LENGTH_SHORT).show();
+                                if (ChromeApplication.rhgDebugMode)
+                                    Toast.makeText(getApplicationContext(), "Bitmap Saved at " + file,
+                                            Toast.LENGTH_SHORT).show();
                             } catch (Exception e)
                             {
                                 e.printStackTrace();
                             }
+                        } else
+                        {
+
+                        }
                     }
                 });
         return true;
@@ -85,11 +106,12 @@ public class RHGTabObserver implements TabObserver
 
         mMessageHandler = new UploadJobServiceMessenger(this.tab.mThemedApplicationContext);
 
-        RHGreasonScroll = getApplicationContext().getString(org.chromium.chrome.browser.R.string.rhg_browseaction_scroll);
-        RHGreasonLink = getApplicationContext().getString(org.chromium.chrome.browser.R.string.rhg_browseaction_link);
+        reasonScroll = getApplicationContext().getString(org.chromium.chrome.browser.R.string.rhg_browseaction_scroll);
+        reasonLink = getApplicationContext().getString(org.chromium.chrome.browser.R.string.rhg_browseaction_link);
+        reasonTyped = getApplicationContext().getString(org.chromium.chrome.browser.R.string.rhg_browseaction_typed);
 
         mServiceComponent = new ComponentName(tab.mThemedApplicationContext, UploadJobService.class);
-        if(mServiceComponent == null)
+        if (mServiceComponent == null)
             Log.d(ChromeApplication.TAG_RHG_JOBSCHEDULER, "Error: service component could not be created.");
         else
             Log.d(ChromeApplication.TAG_RHG_JOBSCHEDULER, "OK: service component created.");
@@ -111,7 +133,7 @@ public class RHGTabObserver implements TabObserver
         }
 
         PersistableBundle extras = new PersistableBundle();
-        extras.putString("reason", tab.mThemedApplicationContext.getResources().getString(R.string.rhg_browseaction_link));
+        extras.putString("reason", reason);
         extras.putString("tabId", String.valueOf(tab.getId()));
         extras.putString("url", url);
         if (file != null)
@@ -141,18 +163,121 @@ public class RHGTabObserver implements TabObserver
     public void onPageLoadFinished(Tab tab)
     {
         Log.d(ChromeApplication.TAG_RHG_TABOBSERVER, "onPageLoadFinished");
-        takeScreenshot(RHGreasonLink);
+//        takeScreenshot(reasonLink);
 
     }
 
     @Override
-    public void onLoadStopped(Tab tab, boolean toDifferentDocument)
+    public void onLoadStopped(final Tab tab, boolean toDifferentDocument)
     {
         String functionName = new Object()
         {
         }.getClass().getEnclosingMethod().getName();
         Log.d(ChromeApplication.TAG_RHG_TABOBSERVER, functionName + ": " + toDifferentDocument);
-        takeScreenshot(tab.lastGesture);
+
+        new Handler().postDelayed(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                takeScreenshot(tab.getLatestReasonOfUpload());
+            }
+        }, 2000);
+    }
+
+    @Override
+    public void onLoadUrl(Tab tab, LoadUrlParams params, int loadType)
+    {
+        Log.d(ChromeApplication.TAG_RHG_TABOBSERVER, "onLoadUrl: " + params.getUrl() + " - " + params.getShouldReplaceCurrentEntry());
+//        tab.lastReason = reasonTyped;
+//        takeScreenshot(reasonTyped);
+    }
+
+//    public class PageTransitionTypes {
+//        public static final int PAGE_TRANSITION_LINK = 0;
+//        public static final int PAGE_TRANSITION_TYPED = 1;
+//        public static final int PAGE_TRANSITION_AUTO_BOOKMARK = 2;
+//        public static final int PAGE_TRANSITION_AUTO_SUBFRAME = 3;
+//        public static final int PAGE_TRANSITION_MANUAL_SUBFRAME = 4;
+//        public static final int PAGE_TRANSITION_GENERATED = 5;
+//        public static final int PAGE_TRANSITION_AUTO_TOPLEVEL = 6;
+//        public static final int PAGE_TRANSITION_FORM_SUBMIT = 7;
+//        public static final int PAGE_TRANSITION_RELOAD = 8;
+//        public static final int PAGE_TRANSITION_KEYWORD = 9;
+//        public static final int PAGE_TRANSITION_KEYWORD_GENERATED = 10;
+//        public static final int PAGE_TRANSITION_LAST_CORE = PAGE_TRANSITION_KEYWORD_GENERATED;
+//        public static final int PAGE_TRANSITION_CORE_MASK = 0xFF;
+//        public static final int PAGE_TRANSITION_BLOCKED = 0x00800000;
+//        public static final int PAGE_TRANSITION_FORWARD_BACK = 0x01000000;
+//        public static final int PAGE_TRANSITION_FROM_ADDRESS_BAR = 0x02000000;
+//        public static final int PAGE_TRANSITION_HOME_PAGE = 0x04000000;
+//        public static final int PAGE_TRANSITION_FROM_API = 0x08000000;
+//        public static final int PAGE_TRANSITION_CHAIN_START = 0x10000000;
+//        public static final int PAGE_TRANSITION_CHAIN_END = 0x20000000;
+//        public static final int PAGE_TRANSITION_CLIENT_REDIRECT = 0x40000000;
+//        public static final int PAGE_TRANSITION_SERVER_REDIRECT = 0x80000000;
+//        public static final int PAGE_TRANSITION_IS_REDIRECT_MASK = 0xC0000000;
+//        public static final int PAGE_TRANSITION_QUALIFIER_MASK = 0xFFFFFF00;
+//    }
+
+    public enum PageTransitionTypes
+    {
+        LINK, //PAGE_TRANSITION_LINK,
+        TYPED, //PAGE_TRANSITION_TYPED,
+        BOOKMARKED, //PAGE_TRANSITION_AUTO_BOOKMARK,
+        PAGE_TRANSITION_AUTO_SUBFRAME,
+        PAGE_TRANSITION_MANUAL_SUBFRAME,
+        PAGE_TRANSITION_GENERATED,
+        PAGE_TRANSITION_AUTO_TOPLEVEL,
+        PAGE_TRANSITION_FORM_SUBMIT,
+        RELOAD, //PAGE_TRANSITION_RELOAD,
+        PAGE_TRANSITION_KEYWORD,
+        PAGE_TRANSITION_KEYWORD_GENERATED,
+        PAGE_TRANSITION_LAST_CORE,// (PAGE_TRANSITION_KEYWORD_GENERATED),
+        PAGE_TRANSITION_CORE_MASK,// (0xFF),
+        PAGE_TRANSITION_BLOCKED,// (0x00800000),
+        PAGE_TRANSITION_FORWARD_BACK,// (0x01000000),
+        PAGE_TRANSITION_FROM_ADDRESS_BAR,// (0x02000000),
+        PAGE_TRANSITION_HOME_PAGE,// (0x04000000),
+        PAGE_TRANSITION_FROM_API,// (0x08000000),
+        PAGE_TRANSITION_CHAIN_START,// (0x10000000),
+        PAGE_TRANSITION_CHAIN_END,// (0x20000000),
+        PAGE_TRANSITION_CLIENT_REDIRECT,// (0x40000000),
+        PAGE_TRANSITION_SERVER_REDIRECT,// (0x80000000),
+        PAGE_TRANSITION_IS_REDIRECT_MASK,// (0xC0000000),
+        PAGE_TRANSITION_QUALIFIER_MASK;// (0xFFFFFF00);
+
+//        public final int type;
+
+//        PageTransitionTypes()
+//        {
+////            this.type = s;
+//        }
+    }
+
+    @Override
+    public void onDidCommitProvisionalLoadForFrame(Tab tab, long frameId, boolean isMainFrame, String url, int transitionType)
+    {
+        String functionName = new Object()
+        {
+        }.getClass().getEnclosingMethod().getName();
+
+        String transitionTypeString = "";
+//        if(transitionType < 11)
+        if (transitionType < 2)
+        {
+            transitionTypeString = PageTransitionTypes.values()[transitionType].toString();
+            tab.setLatestReasonOfUpload(transitionTypeString);
+            Log.d(ChromeApplication.TAG_RHG_TABOBSERVER, functionName + " transition: " + transitionTypeString + " - " + isMainFrame);
+        }
+//        else
+//            transitionTypeString = String.valueOf(transitionType);
+
+
+//        PageTransitionTypes. type(String.valueOf(transitionType));
+//        PageTransitionTypes t = new PageTransitionTypes(transitionType);
+//        tab.setLatestReasonOfUpload(transitionTypeString);
+//        tab.lastReason = transitionTypeString;
     }
 
     @Override
@@ -178,12 +303,6 @@ public class RHGTabObserver implements TabObserver
         {
         }.getClass().getEnclosingMethod().getName();
         Log.d(ChromeApplication.TAG_RHG_TABOBSERVER, functionName);
-    }
-
-    @Override
-    public void onLoadUrl(Tab tab, LoadUrlParams params, int loadType)
-    {
-        Log.d(ChromeApplication.TAG_RHG_TABOBSERVER, "onLoadUrl: " + params);
     }
 
     @Override
@@ -352,14 +471,6 @@ public class RHGTabObserver implements TabObserver
 //        Log.d(ChromeApplication.TAG_RHG_TABOBSERVER, functionName);
     }
 
-    @Override
-    public void onDidCommitProvisionalLoadForFrame(Tab tab, long frameId, boolean isMainFrame, String url, int transitionType)
-    {
-        String functionName = new Object()
-        {
-        }.getClass().getEnclosingMethod().getName();
-//        Log.d(ChromeApplication.TAG_RHG_TABOBSERVER, functionName);
-    }
 
     @Override
     public void onDidNavigateMainFrame(Tab tab, String url, String baseUrl, boolean isNavigationToDifferentPage, boolean isFragmentNavigation, int statusCode)
@@ -413,6 +524,7 @@ public class RHGTabObserver implements TabObserver
         {
         }.getClass().getEnclosingMethod().getName();
         Log.d(ChromeApplication.TAG_RHG_TABOBSERVER, functionName);
+        tab.setLatestReasonOfUpload(reasonTyped);
     }
 
     @Override
