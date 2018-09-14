@@ -71,6 +71,7 @@ import android.util.Log;
 
 import java.util.UUID;
 
+import de.rheingold.database.RHGDatabase;
 import de.rheingold.service.UploadJobService;
 
 /**
@@ -83,18 +84,24 @@ public class ChromeApplication extends ContentApplication
     public static final String COMMAND_LINE_FILE = "chrome-command-line";
 
     public static final String TAG = "ChromiumApplication";
-    public static final String TAG_RHG_TAB = "RHG-Tab";
-    public static final String TAG_RHG_GESTURE = "RHG-Gesture";
-    public static final String TAG_RHG_LOGIN = "RHG-Login";
-    public static final String TAG_RHG_UPLOADSERVICE = "RHG-UploadService";
-    public static final String TAG_RHG_UPLOADSERVICEMESSENGER = "RHG-UploadServiceMess.";
-    public static final String TAG_RHG_TABOBSERVER = "RHG-TabObserver";
-    public static final String TAG_RHG_JOBSCHEDULER = "RHG-JobScheduler";
-    public static final String TAG_RHG_SCREENSHOT = "RHG-Screenshot";
-    public static final String TAG_RHG_URLBAR = "RHG-UrlBar";
+    public static final String TAG_RHG_TAB = "RHGTab";
+    public static final String TAG_RHG_GESTURE = "RHGGesture";
+    public static final String TAG_RHG_LOGIN = "RHGLogin";
+    public static final String TAG_RHG_UPLOADSERVICE = "RHGUploadService";
+    public static final String TAG_RHG_UPLOADSERVICEMESSENGER = "RHGUploadServiceMess.";
+    public static final String TAG_RHG_TABOBSERVER = "RHGTabObserver";
+    public static final String TAG_RHG_JOBSCHEDULER = "RHGJobScheduler";
+    public static final String TAG_RHG_SCREENSHOT = "RHGScreenshot";
+    public static final String TAG_RHG_URLBAR = "RHGUrlBar";
+    public static final String TAG_RHG_DATABASE = "RHGDatabase";
 
     public static final boolean rhgDebugMode = false;
     public static final boolean rhgScreenshots = true;
+
+    public static RHGDatabase getDatabase() {
+        return database;
+    }
+    private static RHGDatabase database;
 
     public static final int MSG_UNCOLOR_START = 0;
     public static final int MSG_UNCOLOR_STOP = 1;
@@ -152,6 +159,10 @@ public class ChromeApplication extends ContentApplication
 
         SharedPreferences sharedPref = this.getSharedPreferences(getResources().getString(R.string.app_name), MODE_PRIVATE);
         browserId = sharedPref.getString("BrowserId", UUID.randomUUID().toString());
+
+        if (database == null) {
+            database = RHGDatabase.getInstance(this);
+        }
 
         super.onCreate();
 

@@ -34,6 +34,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.rheingold.database.TLookup;
 import de.rheingold.utils.SSLUtils;
 
 /*
@@ -140,23 +141,21 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 {
                     json = new JSONObject(response);
                     studyId = json.getString("study_id");
-//                    Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
-//                    LoginActivity.this.startActivity(browserIntent);
                 } catch (JSONException e)
                 {
                     String message = "Fehler beim Einloggen: " + e.getMessage();
                     Log.d(ChromeApplication.TAG_RHG_LOGIN, message);
-//                    Toast.makeText(LoginActivity.this, message, Toast.LENGTH_LONG).show();
                     e.printStackTrace();
                 }
                 if (json != null && studyId != null)
                 {
+                    loadManifest();
                     String message = "Erfolgreich eingeloggt. Studien-ID = " + studyId;
                     if (ChromeApplication.rhgDebugMode)
                         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
                     Log.d(ChromeApplication.TAG_RHG_LOGIN, message);
-                    Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
-                    LoginActivity.this.startActivity(browserIntent);
+//                    Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
+//                    LoginActivity.this.startActivity(browserIntent);
                 }
             }
         }, new Response.ErrorListener()
@@ -168,22 +167,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             }
         })
         {
-            //            @Override
-//            protected Map<String, String> getParams() throws com.android.volley.AuthFailureError
-//            {
-//                Map<String, String> params = new HashMap<String, String>();
-//                Time now = new Time();
-//                now.setToNow();
-//                long currenttimestamp = (System.currentTimeMillis()) / 1000;
-//                params.put("apptime", String.valueOf(currenttimestamp + now.gmtoff));
-//                params.put("deviceinfo", "Android " + android.os.Build.VERSION.SDK + "-" + Build.MANUFACTURER + "-" + android.os.Build.MODEL + "-" + android.os.Build.DEVICE);
-//                params.put("map", "roemerstrasse");
-//                if (BuildConfig.DEBUG)
-//                    params.put("debug", "true");
-//                if (packageInfo != null)
-//                    params.put("appversion", packageInfo.versionName);
-//                return params;
-//            }
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError
             {
@@ -209,78 +192,54 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     public void loadManifest()
     {
-//        String filename = "manifest";
-//        String url = "https" + "://screen.rheingold-salon.de/api/0/" + filename;
-//        RequestQueue queue = Volley.newRequestQueue(this, null);
-//        StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>()
-//        {
-//            @Override
-//            public void onResponse(String response)
-//            {
-//                JSONObject json = null;
-//                try
-//                {
-//                    json = new JSONObject(response);
-//                    studyName = json.getString("name");
-////                    Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
-////                    LoginActivity.this.startActivity(browserIntent);
-//                } catch (JSONException e)
-//                {
-//                    Toast.makeText(LoginActivity.this, "Fehler beim Laden der Daten. Überprüfen sie Ihre Internetverbindung.", Toast.LENGTH_LONG).show();
-//                    e.printStackTrace();
-//                }
-//                if (json != null && studyName != null)
-//                {
-//                    Toast.makeText(getApplicationContext(), studyName, Toast.LENGTH_LONG).show();
+        Log.d(ChromeApplication.TAG_RHG_LOGIN, "Loading manifest...");
+        String filename = "manifest";
+        String url = "https" + "://screen.rheingold-salon.de/api/0/" + filename;
+        RequestQueue queue = Volley.newRequestQueue(this, null);
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>()
+        {
+            @Override
+            public void onResponse(String response)
+            {
+                JSONObject json = null;
+                try
+                {
+                    json = new JSONObject(response);
+                    studyName = json.getString("name");
 //                    Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
 //                    LoginActivity.this.startActivity(browserIntent);
-//                }
-//            }
-//        }, new Response.ErrorListener()
-//        {
-//            @Override
-//            public void onErrorResponse(VolleyError error)
-//            {
-//                Toast.makeText(LoginActivity.this, "Fehler beim Laden der Daten. Überprüfen sie Ihre Internetverbindung: " + error.getMessage(), Toast.LENGTH_LONG).show();
-//            }
-//        })
-//        {
-//            //            @Override
-////            protected Map<String, String> getParams() throws com.android.volley.AuthFailureError
-////            {
-////                Map<String, String> params = new HashMap<String, String>();
-////                Time now = new Time();
-////                now.setToNow();
-////                long currenttimestamp = (System.currentTimeMillis()) / 1000;
-////                params.put("apptime", String.valueOf(currenttimestamp + now.gmtoff));
-////                params.put("deviceinfo", "Android " + android.os.Build.VERSION.SDK + "-" + Build.MANUFACTURER + "-" + android.os.Build.MODEL + "-" + android.os.Build.DEVICE);
-////                params.put("map", "roemerstrasse");
-////                if (BuildConfig.DEBUG)
-////                    params.put("debug", "true");
-////                if (packageInfo != null)
-////                    params.put("appversion", packageInfo.versionName);
-////                return params;
-////            }
-//            @Override
-//            public Map<String, String> getHeaders() throws AuthFailureError
-//            {
-//                HashMap<String, String> headers = new HashMap<String, String>();
-////                String credentials = Uri.encode(etEmail.getText() + ":" + etPass.getText());
-//                byte[] strBytes = null;
-//                try
-//                {
-//                    strBytes = (etEmail.getText() + ":" + etPass.getText()).getBytes("UTF-8");
-//                } catch (UnsupportedEncodingException e)
-//                {
-//                    e.printStackTrace();
-//                }
-//                String credentials = Base64.encodeToString(strBytes, Base64.DEFAULT);
-////                credentials = StringEscapeUtils.unescapeJava(credentials);
-//                headers.put("Authorization", "Basic " + credentials);
-//                return headers;
-//            }
-//        };
-//        queue.add(stringRequest);
+                } catch (JSONException e)
+                {
+                    Toast.makeText(LoginActivity.this, "Fehler beim Laden des Manifests. Überprüfen sie Ihre Internetverbindung.", Toast.LENGTH_LONG).show();
+                    e.printStackTrace();
+                }
+                if (json != null && studyName != null)
+                {
+                    Log.d(ChromeApplication.TAG_RHG_LOGIN, "Manifest loaded: " + json);
+                    TLookup.setContent(json);
+                    Toast.makeText(getApplicationContext(), studyName, Toast.LENGTH_LONG).show();
+                    Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
+                    LoginActivity.this.startActivity(browserIntent);
+                }
+            }
+        }, new Response.ErrorListener()
+        {
+            @Override
+            public void onErrorResponse(VolleyError error)
+            {
+                Toast.makeText(LoginActivity.this, "Fehler beim Laden der Daten. Überprüfen sie Ihre Internetverbindung: " + error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        })
+        {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError
+            {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                headers.put("Authorization", "Basic " + ChromeApplication.authorization);
+                return headers;
+            }
+        };
+        queue.add(stringRequest);
 
     }
 }
