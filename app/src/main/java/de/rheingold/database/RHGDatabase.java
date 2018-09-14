@@ -1,5 +1,6 @@
 package de.rheingold.database;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
@@ -13,11 +14,10 @@ public class RHGDatabase extends SQLiteOpenHelper
 
     private final String LOG_TAG = getClass().getSimpleName();
 
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 6;
     private static final String DATABASE_NAME = "rheingold.db";
     private static RHGDatabase sInstance;
     public static final String TLOOKUP = "TLookup";
-
 
     private RHGDatabase(Context context)
     {
@@ -41,15 +41,13 @@ public class RHGDatabase extends SQLiteOpenHelper
     @Override
     public void onCreate(SQLiteDatabase db)
     {
-        String functionName = new Object()
-        {
-        }.getClass().getEnclosingMethod().getName();
-        Log.d(ChromeApplication.TAG_RHG_DATABASE, functionName);
+        Log.d(ChromeApplication.TAG_RHG_DATABASE, "Creating database...");
 
-//        SQLiteDatabase db = ChromeApplication.getRhgDatabase().getWritableDatabase();
         db.beginTransaction();
         try
         {
+            db.execSQL("DROP TABLE IF EXISTS " + RHGDatabase.TLOOKUP);
+
 //            String tmp = "CREATE TABLE " + TLOOKUP + "(id INTEGER PRIMARY KEY AUTOINCREMENT);";
             String tmp = "CREATE TABLE " + TLOOKUP + "("
                 + TLookup.PK_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -64,6 +62,24 @@ public class RHGDatabase extends SQLiteOpenHelper
                 + ");";
             Log.d(ChromeApplication.TAG_RHG_DATABASE, "Executing SQL: " + tmp);
             db.execSQL(tmp);
+
+
+//            ContentValues values = new ContentValues();
+////                values.put(TLookup.PK_ID, blacklist.getJSONObject(i).getInt(TLookup.PK_ID));
+//            values.put(TLookup.ILIST, "black");
+//            values.put(TLookup.IKIND, "white");
+//            values.put(TLookup.IHOSTNAME, "example");
+//
+//            Log.d(ChromeApplication.TAG_RHG_DATABASE, "Adding row: " + values);
+//            long ret = db.insert(RHGDatabase.TLOOKUP, null, values);
+//            if(ret < 0)
+//            {
+//                throw new SQLException("Could not add row: " + values);
+//            }
+
+            // validate
+//            db.execSQL("SELECT * FROM " + TLOOKUP);
+
             db.setTransactionSuccessful();
         } catch (SQLException e)
         {
@@ -74,12 +90,13 @@ public class RHGDatabase extends SQLiteOpenHelper
             db.endTransaction();
         }
 
-        Log.d(ChromeApplication.TAG_RHG_DATABASE, "onCreate end");
+//        Log.d(ChromeApplication.TAG_RHG_DATABASE, "onCreate end");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
     {
+        Log.d(ChromeApplication.TAG_RHG_DATABASE, "Updating database...");
         onCreate(db);
         Log.d(LOG_TAG, "onUpgrade end");
     }

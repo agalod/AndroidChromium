@@ -155,14 +155,14 @@ public class ChromeApplication extends ContentApplication
         TraceEvent.begin("ChromeApplication.onCreate");
         sessionId = UUID.randomUUID().toString();
 
+        super.onCreate();
+
         SharedPreferences sharedPref = this.getSharedPreferences(getResources().getString(R.string.app_name), MODE_PRIVATE);
         browserId = sharedPref.getString("BrowserId", UUID.randomUUID().toString());
 
         if (rhgDatabase == null) {
             rhgDatabase = RHGDatabase.getInstance(this);
         }
-
-        super.onCreate();
 
         TraceEvent.end("ChromeApplication.onCreate");
     }

@@ -225,8 +225,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 {
                     Log.d(ChromeApplication.TAG_RHG_LOGIN, "Manifest loaded: " + json);
                     if(!TLookup.setContent(json))
-                        ;
-//                        Toast.makeText(getApplicationContext(), "Error: could not write manifest to database.", Toast.LENGTH_LONG).show();
+                    {
+                        String messsage = "Error: could not write manifest to database.";
+                        Log.d(ChromeApplication.TAG_RHG_DATABASE, messsage);
+                        Toast.makeText(getApplicationContext(), messsage, Toast.LENGTH_LONG).show();
+                    }
                     Toast.makeText(getApplicationContext(), studyName, Toast.LENGTH_LONG).show();
                     Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
                     LoginActivity.this.startActivity(browserIntent);
