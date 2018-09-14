@@ -4,11 +4,9 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.chromium.chrome.browser.ChromeApplication;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -33,7 +31,7 @@ public class TLookup
 
     public static List<Lookup> getContent()
     {
-        SQLiteDatabase db = ChromeApplication.getDatabase().getReadableDatabase();
+        SQLiteDatabase db = ChromeApplication.getRhgDatabase().getReadableDatabase();
         try (Cursor c = db.query(TLOOKUP, null, null, null, null, null, null))
         {
             if (c.getCount() > 0)
@@ -66,7 +64,7 @@ public class TLookup
 
     public static void setContent(JSONObject jsonObject)
     {
-        SQLiteDatabase db = ChromeApplication.getDatabase().getWritableDatabase();
+        SQLiteDatabase db = ChromeApplication.getRhgDatabase().getWritableDatabase();
         db.beginTransaction();
         db.execSQL("DROP TABLE IF EXISTS " + RHGDatabase.TLOOKUP);
         try
@@ -95,7 +93,11 @@ public class TLookup
                 values.put(TLookup.IHOSTNAME, blacklist.getJSONObject(i).getString(TLookup.IHOSTNAME));
 
                 Log.d(ChromeApplication.TAG_RHG_DATABASE, "Adding row: " + values);
-                db.insert(RHGDatabase.TLOOKUP, null, values);
+                long ret = db.insert(RHGDatabase.TLOOKUP, null, values);
+                if(ret < 0)
+                {
+                    throw new Exception("Could not add row: " + values);
+                }
             }
             db.setTransactionSuccessful();
         } catch (Exception e)
@@ -105,6 +107,17 @@ public class TLookup
         } finally
         {
             db.endTransaction();
+        }
+
+        // Verify
+        List<Lookup> verification = null;
+        try
+        {
+             verification = getContent();
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+            Log.d(ChromeApplication.TAG_RHG_DATABASE, "Error in verifying database writing: " + e.getMessage());
         }
     }
 

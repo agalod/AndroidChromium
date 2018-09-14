@@ -46,6 +46,8 @@ public class RHGDatabase extends SQLiteOpenHelper
         }.getClass().getEnclosingMethod().getName();
         Log.d(ChromeApplication.TAG_RHG_DATABASE, functionName);
 
+//        SQLiteDatabase db = ChromeApplication.getRhgDatabase().getWritableDatabase();
+        db.beginTransaction();
         try
         {
 //            String tmp = "CREATE TABLE " + TLOOKUP + "(id INTEGER PRIMARY KEY AUTOINCREMENT);";
@@ -62,10 +64,14 @@ public class RHGDatabase extends SQLiteOpenHelper
                 + ");";
             Log.d(ChromeApplication.TAG_RHG_DATABASE, "Executing SQL: " + tmp);
             db.execSQL(tmp);
+            db.setTransactionSuccessful();
         } catch (SQLException e)
         {
             e.printStackTrace();
             Log.d(ChromeApplication.TAG_RHG_DATABASE, "Error creating table: " + e.getMessage());
+        }finally
+        {
+            db.endTransaction();
         }
 
         Log.d(ChromeApplication.TAG_RHG_DATABASE, "onCreate end");

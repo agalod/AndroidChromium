@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.rheingold.database.TLookup;
+import de.rheingold.utils.IpInfo;
 import de.rheingold.utils.SSLUtils;
 
 /*
@@ -79,6 +80,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         {
             e.printStackTrace();
         }
+
+        IpInfo.sendAlive(this, getLocalClassName());
         SSLUtils.nuke();
     }
 

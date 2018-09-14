@@ -64,7 +64,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Messenger;
 import android.os.SystemClock;
 import android.support.multidex.MultiDex;
 import android.util.Log;
@@ -72,7 +71,6 @@ import android.util.Log;
 import java.util.UUID;
 
 import de.rheingold.database.RHGDatabase;
-import de.rheingold.service.UploadJobService;
 
 /**
  * Basic application functionality that should be shared among all browser applications that use
@@ -98,10 +96,10 @@ public class ChromeApplication extends ContentApplication
     public static final boolean rhgDebugMode = false;
     public static final boolean rhgScreenshots = true;
 
-    public static RHGDatabase getDatabase() {
-        return database;
+    public static RHGDatabase getRhgDatabase() {
+        return rhgDatabase;
     }
-    private static RHGDatabase database;
+    private static RHGDatabase rhgDatabase;
 
     public static final int MSG_UNCOLOR_START = 0;
     public static final int MSG_UNCOLOR_STOP = 1;
@@ -160,8 +158,8 @@ public class ChromeApplication extends ContentApplication
         SharedPreferences sharedPref = this.getSharedPreferences(getResources().getString(R.string.app_name), MODE_PRIVATE);
         browserId = sharedPref.getString("BrowserId", UUID.randomUUID().toString());
 
-        if (database == null) {
-            database = RHGDatabase.getInstance(this);
+        if (rhgDatabase == null) {
+            rhgDatabase = RHGDatabase.getInstance(this);
         }
 
         super.onCreate();
