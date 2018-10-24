@@ -13,8 +13,8 @@ by a child template that "extends" this file.
     xmlns:tools="http://schemas.android.com/tools"
     package="org.chromium.chrome.browser"
     tools:ignore="MissingVersion"
-    android:versionCode="2"
-    android:versionName="0.2">
+    android:versionCode="10"
+    android:versionName="0.10">
     <!-- android:versionCode and android:versionName is set through gyp. See build/common.gypi -->
 
     <uses-sdk
@@ -1015,31 +1015,31 @@ by a child template that "extends" this file.
             android:exported="false" />
 
         <!-- Providers for chrome data. -->
-        <provider
-            android:name="org.chromium.chrome.browser.provider.ChromeBrowserProvider"
-            android:authorities="org.chromium.chrome.ChromeBrowserProvider;org.chromium.chrome.browser;org.chromium.chrome"
-            android:exported="true">
-            <path-permission
-                android:path="/bookmarks/search_suggest_query"
-                android:readPermission="android.permission.GLOBAL_SEARCH" />
-        </provider>
+        <!--<provider-->
+            <!--android:name="org.chromium.chrome.browser.provider.ChromeBrowserProvider"-->
+            <!--android:authorities="org.chromium.chrome.ChromeBrowserProvider;org.chromium.chrome.browser;org.chromium.chrome"-->
+            <!--android:exported="true">-->
+            <!--<path-permission-->
+                <!--android:path="/bookmarks/search_suggest_query"-->
+                <!--android:readPermission="android.permission.GLOBAL_SEARCH" />-->
+        <!--</provider>-->
 
         <!-- Provider for FileProvider. -->
-        <provider
-            android:name="org.chromium.chrome.browser.util.ChromeFileProvider"
-            android:authorities="org.chromium.chrome.browser.FileProvider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
+        <!--<provider-->
+            <!--android:name="org.chromium.chrome.browser.util.ChromeFileProvider"-->
+            <!--android:authorities="org.chromium.chrome.browser.FileProvider"-->
+            <!--android:exported="false"-->
+            <!--android:grantUriPermissions="true">-->
+            <!--<meta-data-->
+                <!--android:name="android.support.FILE_PROVIDER_PATHS"-->
+                <!--android:resource="@xml/file_paths" />-->
+        <!--</provider>-->
 
-        <provider
-            android:name="org.chromium.chrome.browser.superviseduser.SupervisedUserContentProvider"
-            android:authorities="org.chromium.chrome.SupervisedUserProvider"
-            android:exported="true"
-            android:permission="android.permission.INTERNET"></provider>
+        <!--<provider-->
+            <!--android:name="org.chromium.chrome.browser.superviseduser.SupervisedUserContentProvider"-->
+            <!--android:authorities="org.chromium.chrome.SupervisedUserProvider"-->
+            <!--android:exported="true"-->
+            <!--android:permission="android.permission.INTERNET"></provider>-->
 
         <!-- Sync adapter for browser invalidation. -->
         <service

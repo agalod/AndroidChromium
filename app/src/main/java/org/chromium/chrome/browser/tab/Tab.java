@@ -462,10 +462,11 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
 //        }
 //    }
 
-    public void setLatestReasonOfUpload(String transitionType)
+    public String setLatestReasonOfUpload(String transitionType)
     {
         latestReasonOfUpload = transitionType;
-        Log.d(ChromeApplication.TAG_RHG_TAB, "Setting latest reason-of-upload: " + latestReasonOfUpload);
+        Log.d(ChromeApplication.TAG_RHG_TAB, "Setting latest reason -of-upload: " + latestReasonOfUpload);
+        return latestReasonOfUpload;
     }
 
     public String getLatestReasonOfUpload()
@@ -889,6 +890,7 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
      */
     public void goBack()
     {
+        setLatestReasonOfUpload("FORWARD_BACK");
         if (isBlimpTab())
         {
             if (getBlimpContents() != null) getBlimpContents().getNavigationController().goBack();
@@ -903,6 +905,7 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
      */
     public void goForward()
     {
+        setLatestReasonOfUpload("FORWARD_BACK");
         if (isBlimpTab())
         {
             if (getBlimpContents() != null)
@@ -945,6 +948,12 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
      */
     public int loadUrl(LoadUrlParams params)
     {
+        String functionName = new Object()
+        {
+        }.getClass().getEnclosingMethod().getName();
+        Log.d(ChromeApplication.TAG_RHG_TAB, functionName + ", transition: " + params.getTransitionType());
+        setLatestReasonOfUpload("TYPED");
+
         try
         {
             TraceEvent.begin("Tab.loadUrl");
@@ -1198,6 +1207,11 @@ public class Tab implements ViewGroup.OnHierarchyChangeListener,
      */
     public void reload()
     {
+        String functionName = new Object()
+        {
+        }.getClass().getEnclosingMethod().getName();
+        Log.d(ChromeApplication.TAG_RHG_TAB, functionName);
+
         // TODO(dtrainor): Should we try to rebuild the ContentView if it's frozen?
         if (isBlimpTab())
         {

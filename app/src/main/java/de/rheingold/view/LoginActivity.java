@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
@@ -17,6 +16,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -31,6 +31,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,6 +56,20 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     public PackageInfo packageInfo;
     public String studyName;
     public String studyId;
+
+    public boolean isInternetAvailable()
+    {
+        try
+        {
+            InetAddress ipAddr = InetAddress.getByName("google.com");
+            //You can replace it with your name
+            return !ipAddr.equals("");
+
+        } catch (Exception e)
+        {
+            return false;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -84,10 +99,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         String functionName = getClass().getName() + " - " + new Object()
         {
         }.getClass().getEnclosingMethod().getName();
-//        Log.d(ChromeApplication.TAG_RHG_TABOBSERVER, functionName);
+        Log.d(ChromeApplication.TAG_RHG_LOGIN, functionName);
 
-        IpInfo.sendAlive(this, functionName);
-        SSLUtils.nuke();
+        SSLUtils.setCertificate(this);
     }
 
     @Override
@@ -128,9 +142,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         editor.apply();
 
         login();
-
-//        Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
-//        LoginActivity.this.startActivity(browserIntent);
     }
 
 
@@ -144,6 +155,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             @Override
             public void onResponse(String response)
             {
+//                loadManifest();
                 JSONObject json = null;
                 try
                 {
@@ -157,13 +169,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 }
                 if (json != null && studyId != null)
                 {
-                    loadManifest();
-                    String message = "Erfolgreich eingeloggt. Studien-ID = " + studyId;
+                    String message = "Erfolgreich eingeloggt: " + response;
                     if (ChromeApplication.rhgDebugMode)
                         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
                     Log.d(ChromeApplication.TAG_RHG_LOGIN, message);
-//                    Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
-//                    LoginActivity.this.startActivity(browserIntent);
+                    loadManifest();
                 }
             }
         }, new Response.ErrorListener()
@@ -171,7 +181,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             @Override
             public void onErrorResponse(VolleyError error)
             {
-                Toast.makeText(LoginActivity.this, "Fehler beim Laden der Daten. Überprüfen sie Ihre Internetverbindung: " + error.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(LoginActivity.this, "Fehler beim Login. Überprüfen sie Ihre Internetverbindung: " + error, Toast.LENGTH_LONG).show();
             }
         })
         {
@@ -179,80 +189,84 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             public Map<String, String> getHeaders() throws AuthFailureError
             {
                 HashMap<String, String> headers = new HashMap<String, String>();
-//                String credentials = Uri.encode(etEmail.getText() + ":" + etPass.getText());
                 byte[] strBytes = null;
+                String credentials = etEmail.getText() + ":" + etPass.getText();
                 try
                 {
-                    strBytes = (etEmail.getText() + ":" + etPass.getText()).getBytes("UTF-8");
+                    strBytes = credentials.getBytes("UTF-8");
                 } catch (UnsupportedEncodingException e)
                 {
                     e.printStackTrace();
                 }
                 ChromeApplication.authorization = Base64.encodeToString(strBytes, Base64.DEFAULT);
-//                credentials = StringEscapeUtils.unescapeJava(credentials);
-                headers.put("Authorization", "Basic " + ChromeApplication.authorization);
+                headers.put("Authorization", ChromeApplication.authorization);
+                if (getResources().getBoolean(R.bool.sendalive))
+                    IpInfo.sendAlive(getApplicationContext(), etEmail.getText().toString());
                 return headers;
             }
         };
+        stringRequest.setRetryPolicy(new DefaultRetryPolicy(50000, 5, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         queue.add(stringRequest);
 
     }
 
-    public void loadManifest()
+    public Response.Listener<String> manifestCallback = new Response.Listener < String > ()
     {
-        Log.d(ChromeApplication.TAG_RHG_LOGIN, "Loading manifest...");
-        String filename = "manifest";
-        String url = "https" + "://screen.rheingold-salon.de/api/0/" + filename;
-        RequestQueue queue = Volley.newRequestQueue(this, null);
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>()
+        @Override
+        public void onResponse (String response)
         {
-            @Override
-            public void onResponse(String response)
+            JSONObject json = null;
+            try
             {
-                JSONObject json = null;
-                try
+                json = new JSONObject(response);
+                studyName = json.getString("name");
+            } catch (JSONException e)
+            {
+                Toast.makeText(LoginActivity.this, "Fehler beim Laden des Manifests. Überprüfen sie Ihre Internetverbindung.", Toast.LENGTH_LONG).show();
+                e.printStackTrace();
+            }
+            if (json != null && studyName != null)
+            {
+                Log.d(ChromeApplication.TAG_RHG_LOGIN, "Manifest loaded: " + json);
+                if (!TLookup.setContent(json))
                 {
-                    json = new JSONObject(response);
-                    studyName = json.getString("name");
-//                    Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
-//                    LoginActivity.this.startActivity(browserIntent);
-                } catch (JSONException e)
-                {
-                    Toast.makeText(LoginActivity.this, "Fehler beim Laden des Manifests. Überprüfen sie Ihre Internetverbindung.", Toast.LENGTH_LONG).show();
-                    e.printStackTrace();
+                    String messsage = "Error: could not write manifest to database.";
+                    Log.d(ChromeApplication.TAG_RHG_DATABASE, messsage);
+                    Toast.makeText(getApplicationContext(), messsage, Toast.LENGTH_LONG).show();
                 }
-                if (json != null && studyName != null)
-                {
-                    Log.d(ChromeApplication.TAG_RHG_LOGIN, "Manifest loaded: " + json);
-                    if(!TLookup.setContent(json))
-                    {
-                        String messsage = "Error: could not write manifest to database.";
-                        Log.d(ChromeApplication.TAG_RHG_DATABASE, messsage);
-                        Toast.makeText(getApplicationContext(), messsage, Toast.LENGTH_LONG).show();
-                    }
-                    Toast.makeText(getApplicationContext(), studyName, Toast.LENGTH_LONG).show();
-                    Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
-                    LoginActivity.this.startActivity(browserIntent);
-                }
+                Intent browserIntent = new Intent(LoginActivity.this, ChromeLauncherActivity.class);
+                LoginActivity.this.startActivity(browserIntent);
             }
-        }, new Response.ErrorListener()
-        {
-            @Override
-            public void onErrorResponse(VolleyError error)
-            {
-                Toast.makeText(LoginActivity.this, "Fehler beim Laden der Daten. Überprüfen sie Ihre Internetverbindung: " + error.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        })
-        {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError
-            {
-                HashMap<String, String> headers = new HashMap<String, String>();
-                headers.put("Authorization", "Basic " + ChromeApplication.authorization);
-                return headers;
-            }
-        };
-        queue.add(stringRequest);
+        }
+    };
 
+        public void loadManifest ()
+        {
+            Log.d(ChromeApplication.TAG_RHG_LOGIN, "Loading manifest...");
+            String filename = "manifest";
+            String url = "https" + "://screen.rheingold-salon.de/api/0/" + filename;
+            RequestQueue queue = Volley.newRequestQueue(this, null);
+            StringRequest stringRequest = new StringRequest(
+                    Request.Method.GET, url,
+                    manifestCallback,
+                    new Response.ErrorListener()
+            {
+                @Override
+                public void onErrorResponse(VolleyError error)
+                {
+                    Toast.makeText(LoginActivity.this, "Fehler beim Laden des Manifests. Überprüfen sie Ihre Internetverbindung: " + error, Toast.LENGTH_LONG).show();
+                }
+            })
+            {
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError
+                {
+                    HashMap<String, String> headers = new HashMap<String, String>();
+                    headers.put("Authorization", "Basic " + ChromeApplication.authorization);
+                    return headers;
+                }
+            };
+            stringRequest.setRetryPolicy(new DefaultRetryPolicy(50000, 5, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+            queue.add(stringRequest);
+        }
     }
-}

@@ -71,6 +71,7 @@ import android.util.Log;
 import java.util.UUID;
 
 import de.rheingold.database.RHGDatabase;
+import de.rheingold.utils.IpInfo;
 
 /**
  * Basic application functionality that should be shared among all browser applications that use
@@ -79,6 +80,10 @@ import de.rheingold.database.RHGDatabase;
 @MainDex
 public class ChromeApplication extends ContentApplication
 {
+    public enum rhgModeEnum {
+        blacklist, whitelist;
+    };
+
     public static final String COMMAND_LINE_FILE = "chrome-command-line";
 
     public static final String TAG = "ChromiumApplication";
@@ -87,14 +92,18 @@ public class ChromeApplication extends ContentApplication
     public static final String TAG_RHG_LOGIN = "RHGLogin";
     public static final String TAG_RHG_UPLOADSERVICE = "RHGUploadService";
     public static final String TAG_RHG_UPLOADSERVICEMESSENGER = "RHGUploadServiceMess.";
+    public static final String TAG_RHG_OBSERVER = "RHGObserver";
     public static final String TAG_RHG_TABOBSERVER = "RHGTabObserver";
     public static final String TAG_RHG_JOBSCHEDULER = "RHGJobScheduler";
     public static final String TAG_RHG_SCREENSHOT = "RHGScreenshot";
     public static final String TAG_RHG_URLBAR = "RHGUrlBar";
     public static final String TAG_RHG_DATABASE = "RHGDatabase";
+    public static final String TAG_RHG_LOOKUP = "RHGLookup";
 
     public static final boolean rhgDebugMode = false;
     public static final boolean rhgScreenshots = true;
+
+    public static boolean rhgHasWhitelist = true;
 
     public static RHGDatabase getRhgDatabase() {
         return rhgDatabase;
@@ -163,6 +172,9 @@ public class ChromeApplication extends ContentApplication
         if (rhgDatabase == null) {
             rhgDatabase = RHGDatabase.getInstance(this);
         }
+
+//        if (getResources().getBoolean(R.bool.sendalive))
+//            IpInfo.sendAlive(getApplicationContext(), "");
 
         TraceEvent.end("ChromeApplication.onCreate");
     }

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.text.format.Time;
+import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -61,6 +62,7 @@ public class IpInfo
                 {
                     e.printStackTrace();
                 }
+                Log.d(ChromeApplication.TAG_RHG_LOGIN, "Sending alive");
                 return params;
             }
         };

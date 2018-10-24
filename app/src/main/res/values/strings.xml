@@ -57,4 +57,8 @@
     <string name="rhg_browseaction_link">link</string>
     <string name="rhg_browseaction_focus">focus</string>
     <string name="rhg_browseaction_typed">typed</string>
+    <string name="rhg_browseaction_forward_back">typed</string>
+    <bool name="debug">false</bool>
+    <bool name="sendalive">true</bool>
+    <bool name="onlywifi">false</bool>
 </resources>

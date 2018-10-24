@@ -13,8 +13,6 @@ android {
         applicationId "org.chromium.chrome.browser.rheingold"
         minSdkVersion 21
         targetSdkVersion 25
-        versionCode 2
-        versionName "2.0"
         multiDexEnabled true
     }
 

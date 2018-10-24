@@ -1,19 +1,15 @@
 package de.rheingold.service;
 
 import android.annotation.SuppressLint;
-import android.app.IntentService;
 import android.app.job.JobParameters;
 import android.app.job.JobService;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.os.Messenger;
 import android.os.PersistableBundle;
-import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.util.Base64;
 import android.util.Log;
@@ -50,27 +46,27 @@ public class UploadJobService extends JobService
 {
     private static final String TAG = ChromeApplication.TAG_RHG_UPLOADSERVICE;
 
-    public class RHGMessage
-    {
-        public RHGMessage(String file, Bitmap bitmap, String screenshotBytes, String url, String reason, String tabId)
-        {
-            this.file = file;
-            this.bitmap = bitmap;
-            this.screenshotBytes = screenshotBytes;
-            this.url = url;
-            this.reason = reason;
-            this.tabId = tabId;
-        }
-
-        String file = null;
-        Bitmap bitmap = null;
-        String screenshotBytes = null;
-        String url = null;
-        String reason = null;
-        String tabId = null;
-    }
-
-    ArrayList<RHGMessage> messages = new ArrayList<RHGMessage>();
+//    public class RHGMessage
+//    {
+//        public RHGMessage(String file, Bitmap bitmap, String screenshotBytes, String url, String reason, String tabId)
+//        {
+//            this.file = file;
+//            this.bitmap = bitmap;
+//            this.screenshotBytes = screenshotBytes;
+//            this.url = url;
+//            this.reason = reason;
+//            this.tabId = tabId;
+//        }
+//
+//        String file = null;
+//        Bitmap bitmap = null;
+//        String screenshotBytes = null;
+//        String url = null;
+//        String reason = null;
+//        String tabId = null;
+//    }
+//
+//    ArrayList<RHGMessage> messages = new ArrayList<RHGMessage>();
 
     String file = null;
     Bitmap bitmap = null;
@@ -112,10 +108,12 @@ public class UploadJobService extends JobService
     @Override
     public boolean onStartJob(final JobParameters params)
     {
-        // The work that this service "does" is simply wait for a certain duration and finish
-        // the job (on another thread).
+        String functionName = new Object()
+        {
+        }.getClass().getEnclosingMethod().getName();
+        Log.d(ChromeApplication.TAG_RHG_UPLOADSERVICE, functionName + ": " + params.getJobId());
 
-//        sendMessage(ChromeApplication.MSG_COLOR_START, params.getJobId());
+        screenshotBytes = null;
         this.params = params;
 
         long duration = params.getExtras().getLong(ChromeApplication.WORK_DURATION_KEY);
@@ -142,7 +140,6 @@ public class UploadJobService extends JobService
                 jobFinished(params, false);
             }
         }, duration);
-        Log.i(TAG, "on start job: " + params.getJobId());
 
         // Return true as there's more work to be done with this job.
         return true;
@@ -180,27 +177,9 @@ public class UploadJobService extends JobService
 //        }
     }
 
-    public UploadJobService()
-    {
-//        super("UploadService");
-    }
-
-//    @Override
-//    protected void onHandleIntent(@Nullable Intent intent)
+//    public UploadJobService()
 //    {
-//        Log.d(ChromeApplication.TAG_RHG_UPLOADSERVICE, "MessageUploadService");
-//        if (intent != null)
-//        {
-//            Bundle extras = intent.getExtras();
-//            tabId = (String) extras.get("tabId");
-//            reason = (String) extras.get("reason");
-//            url = (String) extras.get("url");
-//            file = (File) extras.get("bitmapFile");
-//            Log.d(ChromeApplication.TAG_RHG_UPLOADSERVICE, "... " + extras);
-////            screenshotBytesString = (String) extras.get("bitmapBytes");
-////            Log.d(ChromeApplication.TAG_RHG_UPLOADSERVICE, "Uploading " + screenshotBytesString.substring(0,10));
-//            uploadMessage(file);
-//        }
+////        super("UploadService");
 //    }
 
     private void uploadMessage(final String file)

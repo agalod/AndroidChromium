@@ -17,9 +17,11 @@ import de.rheingold.models.Lookup;
 import static de.rheingold.database.RHGDatabase.TLOOKUP;
 
 
+/*
+ * Controller for whitelist and blacklist
+ * */
 public class TLookup
 {
-
     public static final String PK_ID = "id";
     public static final String IHOSTNAME = "hostname";
     public static final String IKIND = "kind";
@@ -28,6 +30,62 @@ public class TLookup
     public static final String IUPDATED_AT = "updated_at";
     public static final String FK_STUDYID = "study_id";
 
+    static public ArrayList<String> whitelist = new ArrayList<String>();
+    static public ArrayList<String> blacklist = new ArrayList<String>();
+
+//    public TLookup()
+//    {
+//        blacklist.add("signin");
+//        blacklist.add("sign_in");
+//    }
+
+    public static boolean isAllowed(String url, boolean isWhitelist)
+    {
+        SQLiteDatabase db = ChromeApplication.getRhgDatabase().getReadableDatabase();
+        if (isInBlacklist(url))
+        {
+            return false;
+        }
+
+        if (ChromeApplication.rhgHasWhitelist) // whitelist mode
+        {
+            if (isInWhitelist(url))
+            {
+                Log.d(ChromeApplication.TAG_RHG_LOOKUP, "Allowing screenhot for " + url + " (whitelist).");
+                return true;
+            }
+            Log.d(ChromeApplication.TAG_RHG_LOOKUP, "Refusing screenshot for " + url + " (not in whitelist)");
+            return false;
+        }
+        Log.d(ChromeApplication.TAG_RHG_LOOKUP, "Allowing screenhot for " + url);
+        return true;
+    }
+
+    public static boolean isInWhitelist(String url)
+    {
+        for (String keyword : whitelist)
+        {
+            int i = url.toLowerCase().indexOf(keyword.toLowerCase());
+            if (i > -1)// && i < 15) // only when the keyword is at the beginning of the url, e.g. google.de is at pos 12 of https://www.google.de
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isInBlacklist(String url)
+    {
+        for (String keyword : blacklist)
+        {
+            if (url.toLowerCase().contains(keyword.toLowerCase()))
+            {
+                Log.d(ChromeApplication.TAG_RHG_LOOKUP, "Refusing screenshot for " + url + " ( " + keyword + " is in blacklist)");
+                return true;
+            }
+        }
+        return false;
+    }
 
     public static List<Lookup> getContent()
     {
@@ -67,43 +125,60 @@ public class TLookup
         SQLiteDatabase db = ChromeApplication.getRhgDatabase().getWritableDatabase();
         db.beginTransaction();
         db.execSQL("DELETE FROM " + RHGDatabase.TLOOKUP);
+
+        blacklist.add("signin");
+        blacklist.add("sign_in");
+        blacklist.add("ChangeSecretQuestion");
+
         try
         {
-            JSONArray whitelist = jsonObject.getJSONArray("whitelist");
-            JSONArray blacklist = jsonObject.getJSONArray("blacklist");
-            Log.d(ChromeApplication.TAG_RHG_DATABASE, "Blacklist: " + blacklist);
-            for (int i = 0; i < whitelist.length(); i++)
+            JSONArray whitelistObject = jsonObject.getJSONArray("whitelist");
+            JSONArray blacklistObject = jsonObject.getJSONArray("blacklist");
+            if (whitelistObject.length() < 1)
+            {
+                Log.d(ChromeApplication.TAG_RHG_LOOKUP, "Setting Rheingold-Application-Mode to Blacklist.");
+                ChromeApplication.rhgHasWhitelist = false;
+            } else
+                Log.d(ChromeApplication.TAG_RHG_LOOKUP, "Setting Rheingold-Application-Mode to Whitelist.");
+
+            // Filling whitelist
+            Log.d(ChromeApplication.TAG_RHG_DATABASE, "Whitelist: " + whitelistObject);
+            for (int i = 0; i < whitelistObject.length(); i++)
             {
                 ContentValues values = new ContentValues();
 //                values.put(TLookup.PK_ID, whitelist.getJSONObject(i).getInt(TLookup.PK_ID));
                 values.put(TLookup.ILIST, "white");
-                values.put(TLookup.IKIND, whitelist.getJSONObject(i).getString(TLookup.IKIND));
-                values.put(TLookup.IHOSTNAME, whitelist.getJSONObject(i).getString(TLookup.IHOSTNAME));
+                values.put(TLookup.IKIND, whitelistObject.getJSONObject(i).getString(TLookup.IKIND));
+                String keyword = whitelistObject.getJSONObject(i).getString(TLookup.IHOSTNAME);
+                values.put(TLookup.IHOSTNAME, keyword);
+                whitelist.add(keyword);
 
-                Log.d(ChromeApplication.TAG_RHG_DATABASE, "Adding row: " + values);
+                Log.d(ChromeApplication.TAG_RHG_DATABASE, "Adding whitelist row: " + values);
                 long ret = db.insert(RHGDatabase.TLOOKUP, null, values);
                 if (ret < 0)
                 {
+                    Log.d(ChromeApplication.TAG_RHG_LOOKUP, "SQL-insert failed in whitelist on: " + values);
                     throw new Exception("Could not add row: " + values);
                 }
             }
 
-            for (int i = 0; i < blacklist.length(); i++)
+            // Filling blacklist
+            Log.d(ChromeApplication.TAG_RHG_DATABASE, "Blacklist: " + blacklistObject);
+            for (int i = 0; i < blacklistObject.length(); i++)
             {
                 ContentValues values = new ContentValues();
 //                values.put(TLookup.PK_ID, blacklist.getJSONObject(i).getInt(TLookup.PK_ID));
                 values.put(TLookup.ILIST, "black");
-                values.put(TLookup.IKIND, blacklist.getJSONObject(i).getString(TLookup.IKIND));
-                values.put(TLookup.IHOSTNAME, blacklist.getJSONObject(i).getString(TLookup.IHOSTNAME));
+                values.put(TLookup.IKIND, blacklistObject.getJSONObject(i).getString(TLookup.IKIND));
+                String keyword = blacklistObject.getJSONObject(i).getString(TLookup.IHOSTNAME);
+                values.put(TLookup.IHOSTNAME, keyword);
+                blacklist.add(keyword);
 
-//                values.put(TLookup.ILIST, "black");
-//                values.put(TLookup.IKIND, "white");
-//                values.put(TLookup.IHOSTNAME, "example");
-
-                Log.d(ChromeApplication.TAG_RHG_DATABASE, "Adding row: " + values);
+                Log.d(ChromeApplication.TAG_RHG_DATABASE, "Adding blacklist row: " + values);
                 long ret = db.insert(RHGDatabase.TLOOKUP, null, values);
                 if (ret < 0)
                 {
+                    Log.d(ChromeApplication.TAG_RHG_LOOKUP, "SQL-insert failed in blacklist on: " + values);
                     throw new Exception("Could not add row: " + values);
                 }
             }
@@ -112,6 +187,7 @@ public class TLookup
         {
             e.printStackTrace();
             String message = "SetContent(...) - " + e.getMessage();
+            Log.d(ChromeApplication.TAG_RHG_LOOKUP, message);
             return false;
         } finally
         {
